@@ -1,8 +1,8 @@
 # ESP32-TFT-Library-ILI9486
 A library for 3.5 inch RPi LCD (A) 320x480 display from Waveshare
-Create new fonts with MikroElektronika GLCD Font Creator and insert the new font in fonts.h
-You can also display bitmaps, touchpadcontroller XPT2046 is included
-Examplecodes:
+Create new fonts with MikroElektronika GLCD Font Creator and insert the new font in fonts.h  
+You can also display bitmaps, touchpadcontroller XPT2046 is included  
+Examplecodes:  
 ````
 #include "Arduino.h"
 #include "SPI.h"
