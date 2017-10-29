@@ -62,5 +62,51 @@ void loop(void) {
 }
 //-------------------------------------------------------------------------------------
 ````
+Use the touchpad
+````
+#include "Arduino.h"
+#include "SPI.h"
+#include "tft.h"
 
+#define TP_IRQ        39
+#define TP_CS         16
+
+TFT tft;
+TP tp(TP_CS, TP_IRQ);
+
+uint16_t tp_x, tp_y;
+
+void setup() {
+    SPI.begin();
+    tft.begin();
+    SD.begin();
+    tft.setRotation(1); // Use landscape format
+    tp.setRotation(1);
+    tft.fillScreen(TFT_BLACK);
+    tft.setTextColor(TFT_GREENYELLOW);
+    tft.setTextSize(2);
+}
+
+//-------------------------------------------------------------------------------------
+void loop(void) {
+    tp.loop();
+}
+//-------------------------------------------------------------------------------------
+
+// Event from TouchPad
+void tp_pressed(uint16_t x, uint16_t y){
+    tp_x=x;  tp_y=y;
+}
+void tp_released(){
+    tft.fillRect(100, 100, 80, 40, TFT_BLACK);
+    tft.setCursor(100, 100);
+    tft.print("PosX="); tft.println(tp_x);
+    tft.print("PosY="); tft.println(tp_y);
+}
+
+
+
+
+
+````
 
