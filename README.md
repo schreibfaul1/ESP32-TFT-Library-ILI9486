@@ -103,10 +103,5 @@ void tp_released(){
     tft.print("PosX="); tft.println(tp_x);
     tft.print("PosY="); tft.println(tp_y);
 }
-
-
-
-
-
 ````
 
