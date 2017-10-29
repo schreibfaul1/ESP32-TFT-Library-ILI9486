@@ -1,6 +1,6 @@
 # ESP32-TFT-Library-ILI9486
 A library for 3.5 inch RPi LCD (A) 320x480 display from Waveshare  
-![Display](https://raw.githubusercontent.com/username/projectname/branch/path/to/img.png)
+![Display](https://github.com/schreibfaul1/ESP32-TFT-Library-ILI9486/blob/master/TFT_ILI9486_XPT2046/images/Waveshare%20RPi%203.5.jpg)
 
 Create new fonts with MikroElektronika GLCD Font Creator and insert the new font in fonts.h  
 You can also display bitmaps, touchpadcontroller XPT2046 is included  
