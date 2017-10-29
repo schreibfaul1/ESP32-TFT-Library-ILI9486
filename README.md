@@ -38,5 +38,29 @@ void loop(void) {
 }
 //-------------------------------------------------------------------------------------
 ````
+Diaplay a bitmap
+````
+#include "Arduino.h"
+#include "SPI.h"
+#include "SD.h"
+#include "FS.h"
+#include "tft.h"
+
+TFT tft;
+
+void setup() {
+    SPI.begin();
+    tft.begin();
+    SD.begin();
+    tft.setRotation(0); //portait
+    tft.drawBmpFile(SD, "/wall_e.bmp", 0, 0);
+}
+
+//-------------------------------------------------------------------------------------
+void loop(void) {
+        delay(3000);
+}
+//-------------------------------------------------------------------------------------
+````
 
 
