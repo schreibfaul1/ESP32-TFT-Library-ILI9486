@@ -162,12 +162,12 @@ virtual size_t 	  write(const uint8_t *buffer, size_t size);
 };
 
 //Kalibrierung
-//x,y | Ux,Uy  0  ,0     | 1910,1906
-//x,y | Ux,Uy  320,0     |  240,1906
-//x,y | Ux,Uy  0  ,480   | 1910,140
-//x,y | Ux,Uy  320,480   |  240,140
-//daraus ergib sich für x: (1910-240)/320 = 5,2187mV pro Pixel
-//              und für y: (1906-140)/480 = 3,6791mV pro Pixel
+//x,y | Ux,Uy  0  ,0     | 1922,1930
+//x,y | Ux,Uy  320,0     |  140,1930
+//x,y | Ux,Uy  0  ,480   | 1922,125
+//x,y | Ux,Uy  320,480   |  140,125
+//daraus ergib sich fÃ¼r x: (1922-140)/320 = 5,5687mV pro Pixel
+//              und fÃ¼r y: (1930-125)/480 = 3,7604mV pro Pixel
 
 
 
@@ -184,13 +184,13 @@ class TP {
         uint16_t x=0, y=0;
         uint8_t _rotation;
         boolean f_loop=false;
-        //const uint8_t TP_Dummy=0x80; //nur Startbit für XPT2046
+        //const uint8_t TP_Dummy=0x80; //nur Startbit fÃ¼r XPT2046
         float xFaktor;
         float yFaktor;
-        const uint16_t Xmax=1910;
-        const uint16_t Xmin=240;
-        const uint16_t Ymax=1906;
-        const uint16_t Ymin=140;
+        const uint16_t Xmax=1922;
+        const uint16_t Xmin=140;
+        const uint16_t Ymax=1930;
+        const uint16_t Ymin=125;
 
     protected:
         uint16_t TP_Send(uint8_t set_val);
