@@ -6,7 +6,7 @@ Create new fonts with MikroElektronika GLCD Font Creator and insert the new font
 You can also display bitmaps, touchpadcontroller XPT2046 is included  
 Examplecodes: 
   
-````
+```` c++
 #include "Arduino.h"
 #include "SPI.h"
 #include "tft.h"
