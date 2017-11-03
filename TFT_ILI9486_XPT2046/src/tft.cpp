@@ -58,8 +58,9 @@ void TFT::init()
         SPI.write16(0x20);
         SPI.write16(0x00);
 
-        writeCommand(0x20); // Display Inversion OFF
-
+        writeCommand(0x20); // Display Inversion OFF   RPi LCD (A)
+//      writeCommand(0x21); // Display Inversion ON    RPi LCD (B)
+	
         writeCommand(0x36); // Memory Access Control
         SPI.write16(0x48);
 
@@ -690,7 +691,7 @@ size_t TFT::writeText(const uint8_t *str, uint16_t len)      // a pointer to str
 			font_offset = _font[font_index + 2]; //MSB
 			font_offset = font_offset << 8;
 			font_offset = font_offset + _font[font_index + 1]; //LSB
-			//ab font_offset stehen die Infos f¸r das Zeichen
+			//ab font_offset stehen die Infos f√ºr das Zeichen
 			n = 0;
 			for (k = 0; k < font_height; k++) {
 				for (m = 0; m < char_bytes; m++) {
@@ -930,7 +931,7 @@ boolean TFT::drawBmpFile(fs::FS &fs, const char * path, uint16_t x, uint16_t y, 
 /*******************************************************************************/
 /*******************************************************************************/
 
-  // Code f¸r Touchpad mit XPT2046
+  // Code f√ºr Touchpad mit XPT2046
 TP::TP(uint8_t CS, uint8_t IRQ){
     TP_CS=CS;
     TP_IRQ=IRQ;
@@ -979,12 +980,12 @@ bool TP::read_TP(uint16_t& x, uint16_t& y){
   for(i=0; i<3; i++){
       x = TP_Send(0xD0);  //x
 
-      if((x<Xmin) || (x>Xmax)) return false;  //auﬂerhalb des Displays
+      if((x<Xmin) || (x>Xmax)) return false;  //au√üerhalb des Displays
        x=Xmax-x;
       _x[i]=x/xFaktor;
 
       y=  TP_Send(0x90); //y
-      if((y<Ymin) || (y>Ymax)) return false;  //auﬂerhalb des Displays
+      if((y<Ymin) || (y>Ymax)) return false;  //au√üerhalb des Displays
       y=Ymax-y;
      _y[i]=y/yFaktor;
 
@@ -992,8 +993,8 @@ bool TP::read_TP(uint16_t& x, uint16_t& y){
   x=(_x[0]+_x[1]+_x[2])/3; // Mittelwert bilden
   y=(_y[0]+_y[1]+_y[2])/3;
 
-  log_i("TP X org=%i",x);
-  log_i("TP Y org=%i",y);
+  //log_i("TP X org=%i",x);
+  //log_i("TP Y org=%i",y);
 
   if(_rotation==1){tmpxy=x; x=y;   y=TFT_WIDTH-tmpxy;  if(x>TFT_HEIGHT-1) x=0; if(y>TFT_WIDTH-1)y=0;}
   if(_rotation==2){x=TFT_WIDTH-x; y=TFT_HEIGHT-y; if(x>TFT_WIDTH-1) x=0; if(y>TFT_HEIGHT-1) y=0;}
