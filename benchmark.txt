@@ -1,0 +1,35 @@
+
+RPi LCD(A) SPI 26.6MHz (80MHz/3)
+
+Benchmark                Time (microseconds)
+Screen fill              545578
+Text                     75752
+Lines                    477363
+Horiz/Vert Lines         47781
+Rectangles (outline)     28114
+Rectangles (filled)      1330747
+Circles (filled)         299565
+Circles (outline)        398110
+Triangles (outline)      98622
+Triangles (filled)       497232
+Rounded rects (outline)  126946
+Rounded rects (filled)   1485030
+
+--------------------------------------------
+
+RPi LCD(B) SPI 40MHz (80MHz/2)
+
+Benchmark                Time (microseconds)
+Screen fill              389912
+Text                     64342
+Lines                    401130
+Horiz/Vert Lines         35013
+Rectangles (outline)     20797
+Rectangles (filled)      951325
+Circles (filled)         241763
+Circles (outline)        335487
+Triangles (outline)      82751
+Triangles (filled)       369945
+Rounded rects (outline)  104712
+Rounded rects (filled)   1070470
+
