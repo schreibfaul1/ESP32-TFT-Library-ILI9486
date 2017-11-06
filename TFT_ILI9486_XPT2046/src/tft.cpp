@@ -304,43 +304,51 @@ void TFT::drawFastHLine(int16_t x, int16_t y,
 }
 /*******************************************************************************/
 void TFT::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1,  uint16_t color) {
-  int16_t t;
-  int16_t steep = abs(y1 - y0) > abs(x1 - x0);
-  if (steep) {
-    t=x0; x0=y0; y0=t;  // swap (x0, y0);
-	t=x1; x1=y1; y1=t; 	//  swap(x1, y1);
-  }
-  if (x0 > x1) {
-	t=x0; x0=x1; x1=t;  // swap(x0, x1);
-	t=y0; y0=y1; y1=t;  // swap(y0, y1);
-  }
-
-  int16_t dx, dy;
-  dx = x1 - x0;
-  dy = abs(y1 - y0);
-
-  int16_t err = dx / 2;
-  int16_t ystep;
-
-  if (y0 < y1) {
-    ystep = 1;
-  } else {
-    ystep = -1;
-  }
-  startWrite();
-  for (; x0<=x1; x0++) {
+    // Bresenham's algorithm - thx wikipedia - speed enhanced by Bodmer to use
+    // an eficient FastH/V Line draw routine for line segments of 2 pixels or more
+    int16_t t;
+    boolean steep = abs(y1 - y0) > abs(x1 - x0);
     if (steep) {
-      writePixel(y0, x0, color);
-    } else {
-      writePixel(x0, y0, color);
+        t=x0; x0=y0; y0=t;  // swap (x0, y0);
+        t=x1; x1=y1; y1=t;  // swap(x1, y1);
     }
-    err -= dy;
-    if (err < 0) {
-      y0 += ystep;
-      err += dx;
+    if (x0 > x1) {
+        t=x0; x0=x1; x1=t;  // swap(x0, x1);
+        t=y0; y0=y1; y1=t;  // swap(y0, y1);
     }
-  }
-  endWrite();
+    int16_t dx = x1 - x0, dy = abs(y1 - y0);;
+    int16_t err = dx >> 1, ystep = -1, xs = x0, dlen = 0;
+
+    if (y0 < y1) ystep = 1;
+    startWrite();
+    // Split into steep and not steep for FastH/V separation
+    if (steep) {
+        for (; x0 <= x1; x0++) {
+            dlen++;
+            err -= dy;
+            if (err < 0) {
+                err += dx;
+                if (dlen == 1) writePixel(y0, xs, color);
+                else writeFastVLine(y0, xs, dlen, color);
+                dlen = 0; y0 += ystep; xs = x0 + 1;
+            }
+        }
+        if (dlen) writeFastVLine(y0, xs, dlen, color);
+    }
+    else {
+        for (; x0 <= x1; x0++) {
+            dlen++;
+            err -= dy;
+            if (err < 0) {
+                err += dx;
+                if (dlen == 1) writePixel(xs, y0, color);
+                else writeFastHLine(xs, y0, dlen, color);
+                dlen = 0; y0 += ystep; xs = x0 + 1;
+            }
+        }
+        if (dlen) writeFastHLine(xs, y0, dlen, color);
+    }
+    endWrite();
 }
 
 void TFT::fillScreen(uint16_t color) {
