@@ -39,7 +39,7 @@ void loop(void) {
 //-------------------------------------------------------------------------------------
 ````
 Diaplay a bitmap
-````
+```` c++
 #include "Arduino.h"
 #include "SPI.h"
 #include "SD.h"
@@ -52,6 +52,7 @@ void setup() {
     SPI.begin();
     tft.begin();
     SD.begin();
+    //SD.begin(5,SPI,16000000); // faster speed
     tft.setRotation(0); //portait
     tft.drawBmpFile(SD, "/wall_e.bmp", 0, 0);
 }
@@ -63,7 +64,7 @@ void loop(void) {
 //-------------------------------------------------------------------------------------
 ````
 Use the touchpad
-````
+```` c++
 #include "Arduino.h"
 #include "SPI.h"
 #include "tft.h"
