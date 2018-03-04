@@ -80,7 +80,7 @@ uint16_t tp_x, tp_y;
 void setup() {
     SPI.begin();
     tft.begin();
-//    SD.begin();
+//  SD.begin();
     tft.setRotation(1); // Use landscape format
     tp.setRotation(1);
     tft.fillScreen(TFT_BLACK);
