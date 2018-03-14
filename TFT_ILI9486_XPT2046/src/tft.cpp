@@ -766,7 +766,14 @@ size_t TFT::write(uint8_t character) {
 	return 0;
 }
 size_t TFT::write(const uint8_t *buffer, size_t size){
-	if(_f_utf8==true) writeText(UTF8toASCII(buffer), size);
+	if(_f_utf8==true){
+	    size_t size_tmp=size;
+	    for(int i=0; i<size; i++) {
+	        if(buffer[i]==0xC3) size_tmp--; // decrement size for all 0xC3
+	    }
+	    size=size_tmp;
+	    writeText(UTF8toASCII(buffer), size);
+	}
 	else writeText(buffer, size);
 	return 0;
 }
