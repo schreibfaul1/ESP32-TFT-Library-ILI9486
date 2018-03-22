@@ -106,6 +106,9 @@ void tp_released(){
 }
 ````
 
+
+Use a font:  tft.setFont(Courier_New29x50);
+
 ````
 Containing fonts:
 	Courier_New10x18
