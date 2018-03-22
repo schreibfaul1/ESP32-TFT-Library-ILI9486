@@ -105,6 +105,8 @@ void tp_released(){
     tft.print("PosY="); tft.println(tp_y);
 }
 ````
+
+````
 Containing fonts:
 	Courier_New10x18
 	Courier_New11x21
@@ -116,24 +118,26 @@ Containing fonts:
 	Courier_New38x69
 	Courier_New58x103
 
-	Garamond15x18   (Fontsize 1)
-	Garamond17x21		(Fontsize 2)
-	Garamond19x24		(Fontsize 3)
-	Garamond27x33		(Fontsize 4)
-	Garamond34x42		(Fontsize 5)
-	Garamond44x54		(Fontsize 6)
-	Garamond88x108	(Fontsize 7)
+	Garamond15x18           (Fontsize 1)
+	Garamond17x21	        (Fontsize 2)
+	Garamond19x24	        (Fontsize 3)
+	Garamond27x33	        (Fontsize 4)
+	Garamond34x42	        (Fontsize 5)
+	Garamond44x54	        (Fontsize 6)
+	Garamond88x108	        (Fontsize 7)
 
 	MS_Serif39x43
 	Times_New_Roman23x27
 	Wingdings33x24
+````
 
 Note
 Fonts consume a lot Flash Memory. If too many fonts are used, the Flash Memory is too small, you may need to increase the size of the partition in default.cvs.
 
+````
 For example:
 # Name,    Type,  SubType,    Offset,      Size
 phy_init,  data,   phy,       0x9000,      0x7000
 factory,   app,    factory,   0x10000,     3M	
 nvs,       data,   nvs,         ,          0x32000	
-
+````
