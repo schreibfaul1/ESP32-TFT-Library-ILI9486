@@ -38,7 +38,8 @@ void loop(void) {
 }
 //-------------------------------------------------------------------------------------
 ````
-Diaplay a bitmap
+Display a bitmap or jpg file,  thanks to Bodmer for his great work - JPEG Decoder Library 
+https://github.com/Bodmer/JPEGDecoder
 ```` c++
 #include "Arduino.h"
 #include "SPI.h"
@@ -53,13 +54,19 @@ void setup() {
     tft.begin();
     SD.begin();
     //SD.begin(5,SPI,16000000); // faster speed
-    tft.setRotation(0); //portait
-    tft.drawBmpFile(SD, "/wall_e.bmp", 0, 0);
 }
 
 //-------------------------------------------------------------------------------------
 void loop(void) {
-        delay(3000);
+        tft.setRotation(0); //portait
+        tft.drawBmpFile(SD, "/wall_e.bmp", 0, 0);
+        delay(2000);
+        tft.setRotation(3); //landscape
+        tft.drawJpgFile(SD,"/wallpaper1.jpg", 0,0);
+        delay(2000);
+        tft.drawJpgFile(SD,"/arduino.jpg", 100,50);
+        delay(2000);
+
 }
 //-------------------------------------------------------------------------------------
 ````
