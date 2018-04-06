@@ -6,6 +6,8 @@
 #include "SPI.h"
 #include "SD.h"
 #include "fonts.h"
+#include "picojpeg.h"
+
 
 extern __attribute__((weak)) void tft_info(const char*);
 extern __attribute__((weak)) void tp_pressed(uint16_t x, uint16_t y);
@@ -84,45 +86,47 @@ class TFT : public Print {
         void      begin(uint8_t CS=22, uint8_t DC=21, uint8_t MOSI=23, uint8_t MISO=19, uint8_t SCK=18);
 
         void      setRotation(uint8_t r);
-        bool 	  setCursor(uint16_t x, uint16_t y);
+        bool      setCursor(uint16_t x, uint16_t y);
         void      invertDisplay(boolean i);
-//        void      scrollTo(uint16_t y);
+//      void      scrollTo(uint16_t y);
 
 virtual size_t    write(uint8_t);
-virtual size_t 	  write(const uint8_t *buffer, size_t size);
+virtual size_t       write(const uint8_t *buffer, size_t size);
 
         // Recommended Non-Transaction
-        void 	  drawLine(int16_t Xpos0, int16_t Ypos0, int16_t Xpos1, int16_t Ypos1, uint16_t color);
+        void      drawLine(int16_t Xpos0, int16_t Ypos0, int16_t Xpos1, int16_t Ypos1, uint16_t color);
         void      drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
         void      drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
-        void      drawRect(int16_t Xpos, int16_t Ypos, uint16_t Width, uint16_t Height,	uint16_t Color);
+        void      drawRect(int16_t Xpos, int16_t Ypos, uint16_t Width, uint16_t Height,    uint16_t Color);
         void      fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-        void 	  drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color);
-        void 	  fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color);
+        void      drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color);
+        void      fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color);
         void      fillScreen(uint16_t color);
         void      drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
-        void 	  fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
-        void 	  drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
-        void 	  fillCircle(int16_t Xm, int16_t Ym, uint16_t r, uint16_t color);
+        void      fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color);
+        void      drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color);
+        void      fillCircle(int16_t Xm, int16_t Ym, uint16_t r, uint16_t color);
         void      setBrigthness(uint8_t br);
         boolean   drawBmpFile(fs::FS &fs, const char * path, uint16_t x=0, uint16_t y=0, uint16_t maxWidth=0, uint16_t maxHeight=0, uint16_t offX=0, uint16_t offY=0);
+        boolean   drawJpgFile(fs::FS &fs, const char * path, uint16_t x=0, uint16_t y=0, uint16_t maxWidth=0, uint16_t maxHeight=0, uint16_t offX=0, uint16_t offY=0);
         uint16_t  color565(uint8_t r, uint8_t g, uint8_t b);
         size_t    writeText(const uint8_t *str, uint16_t len);
 
         inline void setTextColor(uint16_t color){_textcolor=color;}
-    	inline void setFont(const uint16_t* font){ _font=font;}// the name of the font
-    	inline void setTextSize(uint8_t size){if(size==1) _font=Garamond15x18;
-    										  if(size==2) _font=Garamond17x21;
-    										  if(size==3) _font=Garamond19x24;
-    										  if(size==4) _font=Garamond27x33;
-    										  if(size==5) _font=Garamond34x42;
-    										  if(size==6) _font=Garamond44x54;
-    	                                      if(size==7) _font=Garamond88x108;}
-    	inline void setTextOrientation(uint8_t orientation=0){_textorientation=orientation;} //0 h other v
-    	inline void setUTF8encoder(boolean UTF8){if(UTF8==true) _f_utf8=true; else _f_utf8=false;}
-    	int16_t height(void) const;
+        inline void setFont(const uint16_t* font){ _font=font;}// the name of the font
+        inline void setTextSize(uint8_t size){if(size==1) _font=Garamond15x18;
+                                              if(size==2) _font=Garamond17x21;
+                                              if(size==3) _font=Garamond19x24;
+                                              if(size==4) _font=Garamond27x33;
+                                              if(size==5) _font=Garamond34x42;
+                                              if(size==6) _font=Garamond44x54;
+                                              if(size==7) _font=Garamond88x108;}
+        inline void setTextOrientation(uint8_t orientation=0){_textorientation=orientation;} //0 h other v
+        inline void setUTF8encoder(boolean UTF8){if(UTF8==true) _f_utf8=true; else _f_utf8=false;}
+        int16_t height(void) const;
         int16_t width(void) const;
         uint8_t getRotation(void) const;
+
 
     private:
         uint32_t  _freq;
@@ -136,20 +140,20 @@ virtual size_t 	  write(const uint8_t *buffer, size_t size);
         boolean   _f_utf8=false;
         const uint16_t * _font=Garamond17x21;
         boolean   _f_curPos=false;
-        uint8_t  TFT_DC  = 21;    /* Data or Command */
-    	uint8_t  TFT_CS  = 22;    /* SPI Chip select */
-    	uint8_t  TFT_BL  = 17;    /* BackLight */
-    	uint8_t  TFT_SCK = 18;
-    	uint8_t  TFT_MISO= 19;
-    	uint8_t  TFT_MOSI= 23;
-    	char 	 sbuf[256];
+        uint8_t   TFT_DC  = 21;    /* Data or Command */
+        uint8_t   TFT_CS  = 22;    /* SPI Chip select */
+        uint8_t   TFT_BL  = 17;    /* BackLight */
+        uint8_t   TFT_SCK = 18;
+        uint8_t   TFT_MISO= 19;
+        uint8_t   TFT_MOSI= 23;
+        char      sbuf[256];
 
         inline void TFT_DC_HIGH() {GPIO.out_w1ts = (1 << TFT_DC);}
-    	inline void TFT_DC_LOW()  {GPIO.out_w1tc = (1 << TFT_DC);}
-    	inline void TFT_CS_HIGH() {GPIO.out_w1ts = (1 << TFT_CS);}
-    	inline void TFT_CS_LOW()  {GPIO.out_w1tc = (1 << TFT_CS);}
-    	inline void _swap_int16_t(int16_t a, int16_t b) { int16_t t = a; a = b; b = t; }
-    	void 	    init();
+        inline void TFT_DC_LOW()  {GPIO.out_w1tc = (1 << TFT_DC);}
+        inline void TFT_CS_HIGH() {GPIO.out_w1ts = (1 << TFT_CS);}
+        inline void TFT_CS_LOW()  {GPIO.out_w1tc = (1 << TFT_CS);}
+        inline void _swap_int16_t(int16_t a, int16_t b) { int16_t t = a; a = b; b = t; }
+        void        init();
         void        writeCommand(uint16_t cmd);
         const uint8_t* UTF8toASCII(const uint8_t* str);
 
@@ -171,15 +175,138 @@ virtual size_t 	  write(const uint8_t *buffer, size_t size);
         void      writeFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
         void      writeFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
 
-        void 	  fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color);
-        void 	  drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, uint16_t color);
+        void      fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color);
+        void      drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, uint16_t color);
         void      startBitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
         void      endBitmap();
-
+        void      startJpeg();
+        void      endJpeg();
         void      bmpSkipPixels(fs::File &file, uint8_t bitsPerPixel, size_t len);
         void      bmpAddPixels(fs::File &file, uint8_t bitsPerPixel, size_t len);
         void      drawBitmap(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *pcolors);
+        void      renderJPEG(int xpos, int ypos);
 };
+
+//------------------------------------------------------------------------------
+
+class JPEGDecoder {
+
+
+#ifndef jpg_min
+    #define jpg_min(a,b)     (((a) < (b)) ? (a) : (b))
+#endif
+
+private:
+    const uint8_t JPEG_ARRAY = 0;
+    const uint8_t JPEG_FS_FILE=1;
+    const uint8_t JPEG_SD_FILE=2;
+    File g_pInFileSd;
+    pjpeg_scan_type_t scan_type;
+    pjpeg_image_info_t image_info;
+
+    int16_t   is_available=0;
+    int16_t   mcu_x;
+    int16_t   mcu_y;
+    uint16_t  g_nInFileSize=0;
+    uint16_t  g_nInFileOfs=0;
+    uint16_t  row_pitch=0;
+    uint16_t  decoded_width=0, decoded_height=0;
+    uint16_t  row_blocks_per_mcu=0, col_blocks_per_mcu=0;
+    uint8_t   status=0;
+    uint8_t   jpg_source = 0;
+    uint8_t*  jpg_data;
+
+    static uint8_t pjpeg_callback(unsigned char* pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data);
+    uint8_t pjpeg_need_bytes_callback(unsigned char* pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data);
+    int decode_mcu(void);
+    int decodeCommon(void);
+
+public:
+    uint16_t *pImage=0;
+    JPEGDecoder *thisPtr;
+
+    int width=0;
+    int height=0;
+    int comps=0;
+    int MCUSPerRow=0;
+    int MCUSPerCol=0;
+    pjpeg_scan_type_t scanType;
+    int MCUWidth=0;
+    int MCUHeight=0;
+    int MCUx=0;
+    int MCUy=0;
+
+    JPEGDecoder();
+    ~JPEGDecoder();
+
+    int available(void);
+    int read(void);
+    int readSwappedBytes(void);
+    int decodeSdFile (File g_pInFile);
+    int decodeArray(const uint8_t array[], uint32_t  array_size);
+    void abort(void);
+};
+extern JPEGDecoder JpegDec;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //        uint8_t   decodeJpeg(File file);
+//        uint8_t   initDecodeJpeg(uint16_t);
+//
+//        // Jpeg Error codes
+//        enum status{JPG_NO_MORE_BLOCKS = 1,       JPG_BAD_DHT_COUNTS=2,          JPG_BAD_DHT_INDEX=3,             JPG_BAD_DHT_MARKER=4,
+//                    JPG_BAD_DQT_MARKER=5,           JPG_BAD_DQT_TABLE=6,           JPG_BAD_PRECISION=7,             JPG_BAD_HEIGHT=8,
+//                    JPG_BAD_WIDTH=9,              JPG_TOO_MANY_COMPONENTS=10,    JPG_BAD_SOF_LENGTH=11,           JPG_BAD_VARIABLE_MARKER=12,
+//                    JPG_BAD_DRI_LENGTH=13,        JPG_BAD_SOS_LENGTH=14,         JPG_BAD_SOS_COMP_ID=15,          JPG_W_EXTRA_BYTES_BEFORE_MARKER=16,
+//                    JPG_NO_ARITHMITIC_SUPPORT=17, JPG_UNEXPECTED_MARKER=18,      JPG_NOT_JPEG=19,                 JPG_UNSUPPORTED_MARKER=20,
+//                    JPG_BAD_DQT_LENGTH=21,        JPG_TOO_MANY_BLOCKS=22,        JPG_UNDEFINED_QUANT_TABLE=23,    JPG_UNDEFINED_HUFF_TABLE=24,
+//                    JPG_NOT_SINGLE_SCAN=25,       JPG_UNSUPPORTED_COLORSPACE=26, JPG_UNSUPPORTED_SAMP_FACTORS=27, JPG_DECODE_ERROR=28,
+//                    JPG_BAD_RESTART_MARKER=29,    JPG_ASSERTION_ERROR=30,        JPG_BAD_SOS_SPECTRAL=31,         JPG_BAD_SOS_SUCCESSIVE=32,
+//                    JPG_STREAM_READ_ERROR=33,     JPG_NOTENOUGHMEM=34,           JPG_UNSUPPORTED_COMP_IDENT=35,   JPG_UNSUPPORTED_QUANT_TABLE=36,
+//                    JPG_UNSUPPORTED_MODE=37,       // doesn't support progressive JPEG's
+//        }_status;
+//
+//        typedef enum{
+//           JPG_GRAYSCALE,
+//           JPG_YH1V1,
+//           JPG_YH2V1,
+//           JPG_YH1V2,
+//           JPG_YH2V2
+//        } pjpeg_scan_type_t;
+//
+//        typedef struct {
+//           int m_width; // Image resolution
+//           int m_height;
+//           int m_comps; // Number of components (1 or 3)
+//           int m_MCUSPerRow;// Total number of minimum coded units (MCU's) per row/col.
+//           int m_MCUSPerCol;
+//           pjpeg_scan_type_t m_scanType; // Scan type
+//           int m_MCUWidth;// MCU width/height in pixels (each is either 8 or 16 depending on the scan type)
+//           int m_MCUHeight;
+//           unsigned char *m_pMCUBufR;
+//           unsigned char *m_pMCUBufG;
+//           unsigned char *m_pMCUBufB;
+//        } pjpeg_image_info_t;
+
+
+
+
+
 
 //Kalibrierung
 //x,y | Ux,Uy  0  ,0     | 1922,1930
@@ -188,8 +315,6 @@ virtual size_t 	  write(const uint8_t *buffer, size_t size);
 //x,y | Ux,Uy  320,480   |  140,125
 //daraus ergib sich für x: (1922-140)/320 = 5,5687mV pro Pixel
 //              und für y: (1930-125)/480 = 3,7604mV pro Pixel
-
-
 
 
 class TP {
@@ -216,5 +341,22 @@ class TP {
         uint16_t TP_Send(uint8_t set_val);
         bool read_TP(uint16_t& x, uint16_t& y);
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
