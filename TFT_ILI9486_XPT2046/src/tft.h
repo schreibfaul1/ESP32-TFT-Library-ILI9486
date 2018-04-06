@@ -250,64 +250,6 @@ extern JPEGDecoder JpegDec;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        //        uint8_t   decodeJpeg(File file);
-//        uint8_t   initDecodeJpeg(uint16_t);
-//
-//        // Jpeg Error codes
-//        enum status{JPG_NO_MORE_BLOCKS = 1,       JPG_BAD_DHT_COUNTS=2,          JPG_BAD_DHT_INDEX=3,             JPG_BAD_DHT_MARKER=4,
-//                    JPG_BAD_DQT_MARKER=5,           JPG_BAD_DQT_TABLE=6,           JPG_BAD_PRECISION=7,             JPG_BAD_HEIGHT=8,
-//                    JPG_BAD_WIDTH=9,              JPG_TOO_MANY_COMPONENTS=10,    JPG_BAD_SOF_LENGTH=11,           JPG_BAD_VARIABLE_MARKER=12,
-//                    JPG_BAD_DRI_LENGTH=13,        JPG_BAD_SOS_LENGTH=14,         JPG_BAD_SOS_COMP_ID=15,          JPG_W_EXTRA_BYTES_BEFORE_MARKER=16,
-//                    JPG_NO_ARITHMITIC_SUPPORT=17, JPG_UNEXPECTED_MARKER=18,      JPG_NOT_JPEG=19,                 JPG_UNSUPPORTED_MARKER=20,
-//                    JPG_BAD_DQT_LENGTH=21,        JPG_TOO_MANY_BLOCKS=22,        JPG_UNDEFINED_QUANT_TABLE=23,    JPG_UNDEFINED_HUFF_TABLE=24,
-//                    JPG_NOT_SINGLE_SCAN=25,       JPG_UNSUPPORTED_COLORSPACE=26, JPG_UNSUPPORTED_SAMP_FACTORS=27, JPG_DECODE_ERROR=28,
-//                    JPG_BAD_RESTART_MARKER=29,    JPG_ASSERTION_ERROR=30,        JPG_BAD_SOS_SPECTRAL=31,         JPG_BAD_SOS_SUCCESSIVE=32,
-//                    JPG_STREAM_READ_ERROR=33,     JPG_NOTENOUGHMEM=34,           JPG_UNSUPPORTED_COMP_IDENT=35,   JPG_UNSUPPORTED_QUANT_TABLE=36,
-//                    JPG_UNSUPPORTED_MODE=37,       // doesn't support progressive JPEG's
-//        }_status;
-//
-//        typedef enum{
-//           JPG_GRAYSCALE,
-//           JPG_YH1V1,
-//           JPG_YH2V1,
-//           JPG_YH1V2,
-//           JPG_YH2V2
-//        } pjpeg_scan_type_t;
-//
-//        typedef struct {
-//           int m_width; // Image resolution
-//           int m_height;
-//           int m_comps; // Number of components (1 or 3)
-//           int m_MCUSPerRow;// Total number of minimum coded units (MCU's) per row/col.
-//           int m_MCUSPerCol;
-//           pjpeg_scan_type_t m_scanType; // Scan type
-//           int m_MCUWidth;// MCU width/height in pixels (each is either 8 or 16 depending on the scan type)
-//           int m_MCUHeight;
-//           unsigned char *m_pMCUBufR;
-//           unsigned char *m_pMCUBufG;
-//           unsigned char *m_pMCUBufB;
-//        } pjpeg_image_info_t;
-
-
-
-
-
-
 //Kalibrierung
 //x,y | Ux,Uy  0  ,0     | 1922,1930
 //x,y | Ux,Uy  320,0     |  140,1930
