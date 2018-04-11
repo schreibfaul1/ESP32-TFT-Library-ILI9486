@@ -6,8 +6,6 @@
 #include "SPI.h"
 #include "SD.h"
 #include "fonts.h"
-#include "picojpeg.h"
-
 
 extern __attribute__((weak)) void tft_info(const char*);
 extern __attribute__((weak)) void tp_pressed(uint16_t x, uint16_t y);
@@ -15,8 +13,6 @@ extern __attribute__((weak)) void tp_released();
 
 #define TFT_WIDTH       320
 #define TFT_HEIGHT      480
-
-//
 
 #define ILI9486_INVOFF  0x20 // Display Inversion OFF
 #define ILI9486_INVON   0x21 // Display Inversion ON
@@ -74,10 +70,8 @@ extern __attribute__((weak)) void tp_released();
 #define TFT_WHITE           0xFFFF // 255, 255, 255
 #define TFT_YELLOW          0xFFE0 // 255, 255,   0
 
-
-
+//-----------------------------------------------------------------------------------------------------------------------
 class TFT : public Print {
-    protected:
 
     public:
         TFT();
@@ -148,6 +142,7 @@ virtual size_t       write(const uint8_t *buffer, size_t size);
         uint8_t   TFT_MOSI= 23;
         char      sbuf[256];
 
+        inline int minimum(int a, int b){if(a < b) return a; else return b;}
         inline void TFT_DC_HIGH() {GPIO.out_w1ts = (1 << TFT_DC);}
         inline void TFT_DC_LOW()  {GPIO.out_w1tc = (1 << TFT_DC);}
         inline void TFT_CS_HIGH() {GPIO.out_w1ts = (1 << TFT_CS);}
@@ -187,50 +182,169 @@ virtual size_t       write(const uint8_t *buffer, size_t size);
         void      renderJPEG(int xpos, int ypos);
 };
 
-//------------------------------------------------------------------------------
-
+//-----------------------------------------------------------------------------------------------------------------------
 class JPEGDecoder {
 
-
-#ifndef jpg_min
-    #define jpg_min(a,b)     (((a) < (b)) ? (a) : (b))
-#endif
-
 private:
-    const uint8_t JPEG_ARRAY = 0;
-    const uint8_t JPEG_FS_FILE=1;
-    const uint8_t JPEG_SD_FILE=2;
-    File g_pInFileSd;
-    pjpeg_scan_type_t scan_type;
-    pjpeg_image_info_t image_info;
 
+    typedef enum {  // Scan types
+        PJPG_GRAYSCALE,
+        PJPG_YH1V1,
+        PJPG_YH2V1,
+        PJPG_YH1V2,
+        PJPG_YH2V2
+    } pjpeg_scan_type_t;
+
+    typedef enum
+    {
+       M_SOF0  = 0xC0, M_SOF1  = 0xC1, M_SOF2  = 0xC2, M_SOF3  = 0xC3, M_SOF5  = 0xC5,
+       M_SOF6  = 0xC6, M_SOF7  = 0xC7, M_JPG   = 0xC8, M_SOF9  = 0xC9, M_SOF10 = 0xCA,
+       M_SOF11 = 0xCB, M_SOF13 = 0xCD, M_SOF14 = 0xCE, M_SOF15 = 0xCF, M_DHT   = 0xC4,
+       M_RST0  = 0xD0, M_RST1  = 0xD1, M_RST2  = 0xD2, M_RST3  = 0xD3, M_RST4  = 0xD4,
+       M_RST5  = 0xD5, M_RST6  = 0xD6, M_RST7  = 0xD7, M_SOI   = 0xD8, M_EOI   = 0xD9,
+       M_SOS   = 0xDA, M_DQT   = 0xDB, M_DNL   = 0xDC, M_DRI   = 0xDD, M_DHP   = 0xDE,
+       M_EXP   = 0xDF, M_APP0  = 0xE0, M_APP15 = 0xEF, M_JPG0  = 0xF0, M_JPG13 = 0xFD,
+       M_COM   = 0xFE, M_TEM   = 0x01, M_ERROR = 0x100,RST0    = 0xD0, M_DAC   = 0xCC
+    } JPEG_MARKER;
+
+    typedef struct{
+        int     m_width;        // Image resolution
+        int     m_height;
+        int     m_comps;        // Number of components (1 or 3)
+        int     m_MCUSPerRow;   // Total number of minimum coded units (MCU's) per row/col.
+        int     m_MCUSPerCol;
+        pjpeg_scan_type_t m_scanType; // Scan type
+        int     m_MCUWidth;     // MCU width/height in pixels (each is either 8 or 16 depending on the scan type)
+        int     m_MCUHeight;
+        uint8_t *m_pMCUBufR;
+        uint8_t *m_pMCUBufG;
+        uint8_t *m_pMCUBufB;
+    } pjpeg_image_info_t;
+
+    typedef struct HufftableT{
+        uint16_t mMinCode[16];
+        uint16_t mMaxCode[16];
+        uint8_t mValPtr[16];
+    }HuffTable;
+
+    typedef unsigned char (*pjpeg_need_bytes_callback_t)
+        (unsigned char* pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data);
+
+    pjpeg_scan_type_t  scanType, gScanType;
+    pjpeg_image_info_t image_info;
+    pjpeg_need_bytes_callback_t g_pNeedBytesCallback;
+    HuffTable gHuffTab0, gHuffTab1, gHuffTab2, gHuffTab3;
+
+    File g_pInFileSd;
+
+    const uint8_t  JPEG_ARRAY = 0;
+    const uint8_t  JPEG_FS_FILE=1;
+    const uint8_t  JPEG_SD_FILE=2;
+    const uint16_t PJPG_MAX_WIDTH       = 16384;
+    const uint16_t PJPG_MAX_HEIGHT      = 16384;
+    const uint8_t  PJPG_MAXCOMPSINSCAN  = 3;
+    const uint8_t  PJPG_DCT_SCALE_BITS  = 7;
+    const uint8_t  PJPG_WINOGRAD_QUANT_SCALE_BITS = 10;
+
+    static const uint16_t PJPG_MAX_IN_BUF_SIZE    = 256;
+
+    const uint8_t
+    PJPG_NO_MORE_BLOCKS  =  1,  PJPG_TOO_MANY_COMPONENTS      = 11,
+    PJPG_BAD_DHT_COUNTS  =  2,  PJPG_BAD_VARIABLE_MARKER      = 12,
+    PJPG_BAD_DHT_INDEX   =  3,  PJPG_W_EXTRA_BYTES_BEFORE_MARKER = 16,
+    PJPG_BAD_DHT_MARKER  =  4,  PJPG_NO_ARITHMITIC_SUPPORT    = 17,
+    PJPG_BAD_DQT_MARKER  =  5,  PJPG_UNEXPECTED_MARKER        = 18,
+    PJPG_BAD_DQT_TABLE   =  6,  PJPG_UNSUPPORTED_MARKER       = 20,
+    PJPG_BAD_PRECISION   =  7,  PJPG_UNDEFINED_QUANT_TABLE    = 23,
+    PJPG_BAD_HEIGHT      =  8,  PJPG_UNDEFINED_HUFF_TABLE     = 24,
+    PJPG_BAD_WIDTH       =  9,  PJPG_UNSUPPORTED_COLORSPACE   = 26,
+    PJPG_BAD_SOF_LENGTH  = 10,  PJPG_UNSUPPORTED_SAMP_FACTORS = 27,
+    PJPG_BAD_DRI_LENGTH  = 13,  PJPG_BAD_RESTART_MARKER       = 29,
+    PJPG_BAD_SOS_LENGTH  = 14,  PJPG_BAD_SOS_SPECTRAL         = 31,
+    PJPG_BAD_SOS_COMP_ID = 15,  PJPG_BAD_SOS_SUCCESSIVE       = 32,
+    PJPG_NOT_JPEG        = 19,  PJPG_STREAM_READ_ERROR        = 33,
+    PJPG_BAD_DQT_LENGTH  = 21,  PJPG_UNSUPPORTED_COMP_IDENT   = 35,
+    PJPG_TOO_MANY_BLOCKS = 22,  PJPG_UNSUPPORTED_QUANT_TABLE  = 36,
+    PJPG_NOT_SINGLE_SCAN = 25,
+    PJPG_DECODE_ERROR    = 28,
+    PJPG_ASSERTION_ERROR = 30,
+    PJPG_NOTENOUGHMEM    = 34,
+    PJPG_UNSUPPORTED_MODE= 37;  // picojpeg doesn't support progressive JPEG's
+
+    const uint8_t ZAG[64] = {
+         0,   1,   8,  16,   9,   2,   3,  10,  17,  24,  32,  25,  18,  11,   4,   5,
+        12,  19,  26,  33,  40,  48,  41,  34,  27,  20,  13,   6,   7,  14,  21,  28,
+        35,  42,  49,  56,  57,  50,  43,  36,  29,  22,  15,  23,  30,  37,  44,  51,
+        58,  59,  52,  45,  38,  31,  39,  46,  53,  60,  61,  54,  47,  55, 62,  63};
+
+    const uint8_t gWinogradQuant[64] = {
+       128, 178, 178, 167, 246, 167, 151, 232, 232, 151, 128, 209, 219, 209, 128, 101,
+       178, 197, 197, 178, 101,  69, 139, 167, 177, 167, 139,  69,  35,  96, 131, 151,
+       151, 131,  96,  35,  49,  91, 118, 128, 118,  91,  49,  46,  81, 101, 101,  81,
+        46,  42,  69,  79,  69,  42,  35,  54,  54,  35,  28,  37,  28,  19,  19,  10};
+
+    uint8_t   status=0;
+    uint8_t   jpg_source=0;
+    uint8_t   gHuffVal0[16],  gHuffVal1[16];
+    uint8_t   gHuffVal2[256], gHuffVal3[256];
+    uint8_t   gCompsInScan;
+    uint8_t   gValidHuffTables;
+    uint8_t   gValidQuantTables;
+    uint8_t   gTemFlag;
+    uint8_t   gInBuf[PJPG_MAX_IN_BUF_SIZE];
+    uint8_t   gInBufOfs;
+    uint8_t   gInBufLeft;
+    uint8_t   gBitsLeft;
+    uint8_t   gCompsInFrame;
+    uint8_t   gMaxBlocksPerMCU;
+    uint8_t   gMaxMCUXSize;
+    uint8_t   gMaxMCUYSize;
+    uint8_t   gCompList [3];
+    uint8_t   gCompDCTab[3]; // 0,1
+    uint8_t   gCompACTab[3]; // 0,1
+    uint8_t   gCompIdent[3];
+    uint8_t   gCompHSamp[3];
+    uint8_t   gCompVSamp[3];
+    uint8_t   gCompQuant[3];
+    uint8_t   gCallbackStatus;
+    uint8_t   gReduce;
+    uint8_t   gMCUOrg[6];
+    uint8_t   gMCUBufR[256];
+    uint8_t   gMCUBufG[256];
+    uint8_t   gMCUBufB[256];
     int16_t   is_available=0;
     int16_t   mcu_x;
     int16_t   mcu_y;
+    int16_t   gCoeffBuf[8*8];
+    int16_t   gQuant0[8*8];
+    int16_t   gQuant1[8*8];
+    int16_t   gLastDC[3];
     uint16_t  g_nInFileSize=0;
     uint16_t  g_nInFileOfs=0;
     uint16_t  row_pitch=0;
     uint16_t  decoded_width=0, decoded_height=0;
     uint16_t  row_blocks_per_mcu=0, col_blocks_per_mcu=0;
-    uint8_t   status=0;
-    uint8_t   jpg_source = 0;
+    uint16_t  gBitBuf;
+    uint16_t  gImageXSize, gImageYSize;
+    uint16_t  gRestartInterval;
+    uint16_t  gNextRestartNum;
+    uint16_t  gRestartsLeft;
     uint8_t*  jpg_data;
+    uint16_t  gMaxMCUSPerRow;
+    uint16_t  gMaxMCUSPerCol;
+    uint16_t  gNumMCUSRemaining;
 
-    static uint8_t pjpeg_callback(unsigned char* pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data);
-    uint8_t pjpeg_need_bytes_callback(unsigned char* pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data);
-    int decode_mcu(void);
-    int decodeCommon(void);
+    void *g_pCallback_data;
 
-public:
-    uint16_t *pImage=0;
     JPEGDecoder *thisPtr;
-
-    int width=0;
-    int height=0;
     int comps=0;
     int MCUSPerRow=0;
     int MCUSPerCol=0;
-    pjpeg_scan_type_t scanType;
+
+public:
+    uint16_t *pImage=0;
+    int width=0;
+    int height=0;
     int MCUWidth=0;
     int MCUHeight=0;
     int MCUx=0;
@@ -238,17 +352,145 @@ public:
 
     JPEGDecoder();
     ~JPEGDecoder();
-
-    int available(void);
     int read(void);
-    int readSwappedBytes(void);
     int decodeSdFile (File g_pInFile);
-    int decodeArray(const uint8_t array[], uint32_t  array_size);
     void abort(void);
+        // Initializes the decompressor. Returns 0 on success, or one of the above error codes on failure. pNeed_bytes_callback will be called
+        // to fill the decompressor's internal input buffer. If reduce is 1, only the first pixel of each block will be decoded. This mode is
+        // much faster because it skips the AC dequantization, IDCT and chroma upsampling of every image pixel.Not thread safe.
+    uint8_t pjpeg_decode_init(pjpeg_image_info_t *pInfo, pjpeg_need_bytes_callback_t pNeed_bytes_callback, void *pCallback_data, unsigned char reduce);
+        // Decompresses the file's next MCU. Returns 0 on success, PJPG_NO_MORE_BLOCKS if no more blocks are available, or an error code.
+        // Must be called a total of m_MCUSPerRow*m_MCUSPerCol times to completely decompress the image. Not thread safe.
+    uint8_t pjpeg_decode_mcu();
+
+private:
+    int available(void);
+    int readSwappedBytes(void);
+    int decodeArray(const uint8_t array[], uint32_t  array_size);
+    int decode_mcu(void);
+    int decodeCommon(void);
+    static uint8_t pjpeg_callback(unsigned char* pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data);
+    uint8_t pjpeg_need_bytes_callback(unsigned char* pBuf, unsigned char buf_size, unsigned char *pBytes_actually_read, void *pCallback_data);
+
+    int16_t replicateSignBit16(int8_t n);
+    uint16_t getBits(uint8_t numBits, uint8_t FFCheck);
+    uint16_t getExtendTest(uint8_t i);
+    int16_t getExtendOffset(uint8_t i);
+    HuffTable* getHuffTable(uint8_t index);
+    uint8_t* getHuffVal(uint8_t index);
+    uint8_t readDHTMarker(void);
+    uint8_t readDQTMarker(void);
+    uint8_t locateSOIMarker(void);
+    uint8_t locateSOFMarker(void);
+    uint8_t locateSOSMarker(uint8_t* pFoundEOI);
+    uint8_t init(void);
+    uint8_t processRestart(void);
+    uint8_t findEOI(void);
+    uint8_t checkHuffTables(void);
+    uint8_t checkQuantTables(void);
+    uint8_t initScan(void);
+    uint8_t initFrame(void);
+    uint8_t readSOFMarker(void);
+    uint8_t skipVariableMarker(void);
+    uint8_t readDRIMarker(void);
+    uint8_t readSOSMarker(void);
+    uint8_t nextMarker(void);
+    uint8_t processMarkers(uint8_t* pMarker);
+    uint8_t huffDecode(const HuffTable* pHuffTable, const uint8_t* pHuffVal);
+    uint8_t decodeNextMCU(void);
+    void fillInBuf(void);
+    void fixInBuffer(void);
+    void idctRows(void);
+    void idctCols(void);
+    void createWinogradQuant(int16_t* pQuant);
+    void huffCreate(const uint8_t* pBits, HuffTable* pHuffTable);
+    void upsampleCb(uint8_t srcOfs, uint8_t dstOfs);
+    void upsampleCbH(uint8_t srcOfs, uint8_t dstOfs);
+    void upsampleCbV(uint8_t srcOfs, uint8_t dstOfs);
+    void upsampleCr(uint8_t srcOfs, uint8_t dstOfs);
+    void upsampleCrH(uint8_t srcOfs, uint8_t dstOfs);
+    void upsampleCrV(uint8_t srcOfs, uint8_t dstOfs);
+    void copyY(uint8_t dstOfs);
+    void convertCb(uint8_t dstOfs);
+    void convertCr(uint8_t dstOfs);
+    void transformBlock(uint8_t mcuBlock);
+    void transformBlockReduce(uint8_t mcuBlock);
+
+    inline int jpg_min(int a, int b){
+        if(a < b) return a; else return b;
+    }
+    inline int16_t arithmeticRightShiftN16(int16_t x, int8_t n){
+        int16_t r = (uint16_t)x >> (uint8_t)n;
+        if (x < 0) r |= replicateSignBit16(n); return r;
+    }
+     inline int32_t arithmeticRightShift8L(long x){
+        int32_t r = (unsigned long)x >> 8U;
+        if (x < 0) r |= ~(~(unsigned long)0U >> 8U); return r;
+     }
+     inline uint8_t getOctet(uint8_t FFCheck){
+        uint8_t c = getChar();
+        if ((FFCheck) && (c == 0xFF)){ uint8_t n = getChar();
+           if (n){ stuffChar(n); stuffChar(0xFF);}
+        } return c;
+     }
+     inline uint16_t getBits1(uint8_t numBits){
+         return getBits(numBits, 0);
+     }
+     inline uint16_t getBits2(uint8_t numBits){
+        return getBits(numBits, 1);
+     }
+     inline uint8_t getChar(void){
+        if (!gInBufLeft){ fillInBuf(); if (!gInBufLeft){
+              gTemFlag = ~gTemFlag; return gTemFlag ? 0xFF : 0xD9;}}
+        gInBufLeft--; return gInBuf[gInBufOfs++];
+     }
+     inline void stuffChar(uint8_t i){
+        gInBufOfs--;  gInBuf[gInBufOfs] = i; gInBufLeft++;
+     }
+     inline uint8_t getBit(void){
+        uint8_t ret = 0;
+        if (gBitBuf & 0x8000) ret = 1;
+        if (!gBitsLeft){gBitBuf |= getOctet(1); gBitsLeft += 8;}
+        gBitsLeft--; gBitBuf <<= 1;
+        return ret;
+     }
+     inline int16_t huffExtend(uint16_t x, uint8_t s){
+        return ((x < getExtendTest(s)) ? ((int16_t)x + getExtendOffset(s)) : (int16_t)x);
+     }
+     inline uint16_t getMaxHuffCodes(uint8_t index){
+         return (index < 2) ? 12 : 255;
+     }
+     inline int16_t imul_b1_b3(int16_t w){       // 1/cos(4*pi/16)[362, 256+106]
+        long x = (w * 362L); x += 128L; return (int16_t)(arithmeticRightShift8L(x));
+     }
+     inline int16_t imul_b2(int16_t w){          // 1/cos(6*pi/16)[669, 256+256+157]
+        long x = (w * 669L); x += 128L; return (int16_t)(arithmeticRightShift8L(x));
+     }
+     inline int16_t imul_b4(int16_t w){          // 1/cos(2*pi/16)[277, 256+21]
+        long x = (w * 277L); x += 128L; return (int16_t)(arithmeticRightShift8L(x));
+     }
+     inline int16_t imul_b5(int16_t w){          // 1/(cos(2*pi/16) + cos(6*pi/16))[196, 196]
+        long x = (w * 196L); x += 128L; return (int16_t)(arithmeticRightShift8L(x));
+     }
+     inline uint8_t clamp(int16_t s){
+        if ((uint16_t)s > 255U){ if (s < 0) return 0; else if (s > 255) return 255;}
+        return (uint8_t)s;
+     }
+     inline uint8_t addAndClamp(uint8_t a, int16_t b){
+        b = a + b; if ((uint16_t)b > 255U){if (b < 0)  return 0;else if (b > 255) return 255;}
+        return (uint8_t)b;
+     }
+     inline uint8_t subAndClamp(uint8_t a, int16_t b){
+        b = a - b; if ((uint16_t)b > 255U) {if (b < 0) return 0; else if (b > 255) return 255;}
+        return (uint8_t)b;
+     }
+     inline int16_t PJPG_DESCALE(int16_t x){
+         return arithmeticRightShiftN16(x + (1U << (PJPG_DCT_SCALE_BITS - 1)), PJPG_DCT_SCALE_BITS);
+     }
 };
-extern JPEGDecoder JpegDec;
 
-
+//-----------------------------------------------------------------------------------------------------------------------
+class TP {
 
 //Kalibrierung
 //x,y | Ux,Uy  0  ,0     | 1922,1930
@@ -258,8 +500,6 @@ extern JPEGDecoder JpegDec;
 //daraus ergib sich für x: (1922-140)/320 = 5,5687mV pro Pixel
 //              und für y: (1930-125)/480 = 3,7604mV pro Pixel
 
-
-class TP {
     public:
 
         TP(uint8_t TP_CS, uint8_t TP_IRQ);

@@ -2,14 +2,11 @@
 #include "Arduino.h"
 #include "tft.h"
 
-
-#define minimum(a,b)     (((a) < (b)) ? (a) : (b))
 #define TFT_MAX_PIXELS_AT_ONCE  32
 
 JPEGDecoder JpegDec;
 
 void TFT::init() {
-
     if(tft_info) tft_info("init ILI9486\n");
     startWrite();
         //Driving ability Setting
@@ -474,7 +471,6 @@ void TFT::drawRect(int16_t Xpos, int16_t Ypos, uint16_t Width, uint16_t Height, 
     endWrite();
 }
 
-
 void TFT::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color) {
     // smarter version
     startWrite();
@@ -638,7 +634,6 @@ bool TFT::setCursor(uint16_t x, uint16_t y) {
     return true;
 }
 /*******************************************************************************/
-/*******************************************************************************/
 
 size_t TFT::writeText(const uint8_t *str, uint16_t len) {     // a pointer to string
 
@@ -770,7 +765,6 @@ size_t TFT::writeText(const uint8_t *str, uint16_t len) {     // a pointer to st
     return i;
 }
 
-
 size_t TFT::write(uint8_t character) {
     /*Code to display letter when given the ASCII code for it*/
     return 0;
@@ -802,13 +796,9 @@ const uint8_t*  TFT::UTF8toASCII(const uint8_t* str){
     return (sbuf);
 }
 
-/*******************************************************************************/
-
-/*
- * Bitmaps
- * */
-
-
+/*******************************************************************************************************************
+                                            B I T M A P S
+*******************************************************************************************************************/
 
 #define bmpRead32(d,o) (d[o] | (uint16_t)(d[(o)+1]) << 8 | (uint32_t)(d[(o)+2]) << 16 | (uint32_t)(d[(o)+3]) << 24)
 #define bmpRead16(d,o) (d[o] | (uint16_t)(d[(o)+1]) << 8)
@@ -950,6 +940,10 @@ boolean TFT::drawBmpFile(fs::FS &fs, const char * path, uint16_t x, uint16_t y, 
     return true;
 }
 
+/*******************************************************************************************************************
+                                            J P E G
+*******************************************************************************************************************/
+
 boolean TFT::drawJpgFile(fs::FS &fs, const char * path, uint16_t x, uint16_t y, uint16_t maxWidth, uint16_t maxHeight, uint16_t offX, uint16_t offY){
     if((x + maxWidth) > width() || (y + maxHeight) > height()){
         log_e("Bad dimensions given");
@@ -1042,10 +1036,8 @@ void TFT::renderJPEG(int xpos, int ypos) {
     // print the results to the serial port
     log_i("Total render time was: %ims",drawTime);
     endJpeg();
-    log_i("end of jpegread");
 }
 
-/*******************************************************************************/
 // JPEGDecoder thx to Bodmer https://github.com/Bodmer/JPEGDecoder
 JPEGDecoder::JPEGDecoder(){ // @suppress("Class members should be properly initialized")
     mcu_x = 0 ;
@@ -1067,29 +1059,24 @@ uint8_t JPEGDecoder::pjpeg_callback(uint8_t* pBuf, uint8_t buf_size, uint8_t *pB
 
 uint8_t JPEGDecoder::pjpeg_need_bytes_callback(uint8_t* pBuf, uint8_t buf_size, uint8_t *pBytes_actually_read, void *pCallback_data) {
     uint n;
-
     n = jpg_min(g_nInFileSize - g_nInFileOfs, buf_size);
-
     if (jpg_source == JPEG_ARRAY) { // We are handling an array
         for (int i = 0; i < n; i++) {
             pBuf[i] = pgm_read_byte(jpg_data++);
             //Serial.println(pBuf[i],HEX);
         }
     }
-
     if (jpg_source == JPEG_SD_FILE) g_pInFileSd.read(pBuf,n); // else we are handling a file
-
-
     *pBytes_actually_read = (uint8_t)(n);
     g_nInFileOfs += n;
     return 0;
 }
 
 int JPEGDecoder::decode_mcu(void) {
-    status = pjpeg_decode_mcu();
+    status = JpegDec.pjpeg_decode_mcu();
     if (status) {
         is_available = 0 ;
-        if (status != PJPG_NO_MORE_BLOCKS) {
+        if (status != JpegDec.PJPG_NO_MORE_BLOCKS) {
             log_e("pjpeg_decode_mcu() failed with status %i", status);
             return -1;
         }
@@ -1097,15 +1084,13 @@ int JPEGDecoder::decode_mcu(void) {
     return 1;
 }
 
-
-int JPEGDecoder::read(void) {
+int JPEGDecoder::read(void){
     int y, x;
     uint16_t *pDst_row;
     if(is_available == 0 || mcu_y >= image_info.m_MCUSPerCol) {
         abort();
         return 0;
     }
-
     // Copy MCU's pixel blocks into the destination bitmap.
     pDst_row = pImage;
     for (y = 0; y < image_info.m_MCUHeight; y += 8) {
@@ -1139,7 +1124,6 @@ int JPEGDecoder::read(void) {
                         *pDst++ = (*pSrcR & 0xF8) << 8 | (*pSrcG & 0xFC) <<3 | *pSrcB >> 3;
                         pSrcR++; pSrcG++; pSrcB++;
                     }
-
                     pSrcR += (8 - bx_limit);
                     pSrcG += (8 - bx_limit);
                     pSrcB += (8 - bx_limit);
@@ -1158,7 +1142,6 @@ int JPEGDecoder::read(void) {
         mcu_x = 0;
         mcu_y++;
     }
-
     if(decode_mcu()==-1) is_available = 0 ;
     return 1;
 }
@@ -1171,33 +1154,26 @@ int JPEGDecoder::readSwappedBytes(void) {
         abort();
         return 0;
     }
-
     // Copy MCU's pixel blocks into the destination bitmap.
     pDst_row = pImage;
     for (y = 0; y < image_info.m_MCUHeight; y += 8) {
-
         const int by_limit = jpg_min(8, image_info.m_height - (mcu_y * image_info.m_MCUHeight + y));
 
         for (x = 0; x < image_info.m_MCUWidth; x += 8) {
             uint16_t *pDst_block = pDst_row + x;
-
             // Compute source byte offset of the block in the decoder's MCU buffer.
             uint src_ofs = (x * 8U) + (y * 16U);
             const uint8_t *pSrcR = image_info.m_pMCUBufR + src_ofs;
             const uint8_t *pSrcG = image_info.m_pMCUBufG + src_ofs;
             const uint8_t *pSrcB = image_info.m_pMCUBufB + src_ofs;
-
             const int bx_limit = jpg_min(8, image_info.m_width - (mcu_x * image_info.m_MCUWidth + x));
 
             if (image_info.m_scanType == PJPG_GRAYSCALE) {
                 int bx, by;
                 for (by = 0; by < by_limit; by++) {
                     uint16_t *pDst = pDst_block;
-
                     for (bx = 0; bx < bx_limit; bx++) {
-
                         *pDst++ = (*pSrcR & 0xF8) | (*pSrcR & 0xE0) >> 5 | (*pSrcR & 0xF8) << 5 | (*pSrcR & 0x1C) << 11;
-
                         pSrcR++;
                     }
                 }
@@ -1208,23 +1184,18 @@ int JPEGDecoder::readSwappedBytes(void) {
                     uint16_t *pDst = pDst_block;
 
                     for (bx = 0; bx < bx_limit; bx++) {
-
                         *pDst++ = (*pSrcR & 0xF8) | (*pSrcG & 0xE0) >> 5 | (*pSrcB & 0xF8) << 5 | (*pSrcG & 0x1C) << 11;
-
                         pSrcR++; pSrcG++; pSrcB++;
                     }
-
                     pSrcR += (8 - bx_limit);
                     pSrcG += (8 - bx_limit);
                     pSrcB += (8 - bx_limit);
-
                     pDst_block += row_pitch;
                 }
             }
         }
         pDst_row += (row_pitch * 8);
     }
-
     MCUx = mcu_x;
     MCUy = mcu_y;
 
@@ -1233,62 +1204,42 @@ int JPEGDecoder::readSwappedBytes(void) {
         mcu_x = 0;
         mcu_y++;
     }
-
     if(decode_mcu()==-1) is_available = 0 ;
-
     return 1;
 }
 
-
 int JPEGDecoder::decodeSdFile(File jpgFile) { // This is for the SD library
-
     g_pInFileSd = jpgFile;
-
     jpg_source = JPEG_SD_FILE; // Flag to indicate a SD file
 
     if (!g_pInFileSd) {
         return -1;
     }
-
     g_nInFileOfs = 0;
-
     g_nInFileSize = g_pInFileSd.size();
 
     return decodeCommon();
-
 }
-//#endif
-
 
 int JPEGDecoder::decodeArray(const uint8_t array[], uint32_t  array_size) {
-
     jpg_source = JPEG_ARRAY; // We are not processing a file, use arrays
-
     g_nInFileOfs = 0;
-
     jpg_data = (uint8_t *)array;
-
     g_nInFileSize = array_size;
-
     return decodeCommon();
 }
 
-
 int JPEGDecoder::decodeCommon(void) {
-
-    status = pjpeg_decode_init(&image_info, pjpeg_callback, NULL, 0);
-
+    status = JpegDec.pjpeg_decode_init(&image_info, pjpeg_callback, NULL, 0);
     if (status) {
         log_e("pjpeg_decode_init() failed with status %i", status);
-        if (status == PJPG_UNSUPPORTED_MODE) {
+        if (status == JpegDec.PJPG_UNSUPPORTED_MODE) {
             log_e("Progressive JPEG files are not supported.");
         }
         return -1;
     }
-
     decoded_width =  image_info.m_width;
     decoded_height =  image_info.m_height;
-
     row_pitch = image_info.m_MCUWidth;
     pImage = new uint16_t[image_info.m_MCUWidth * image_info.m_MCUHeight];
     if (!pImage) {
@@ -1299,9 +1250,7 @@ int JPEGDecoder::decodeCommon(void) {
 
     row_blocks_per_mcu = image_info.m_MCUWidth >> 3;
     col_blocks_per_mcu = image_info.m_MCUHeight >> 3;
-
     is_available = 1 ;
-
     width = decoded_width;
     height = decoded_height;
     comps = 1;
@@ -1310,7 +1259,6 @@ int JPEGDecoder::decodeCommon(void) {
     scanType = image_info.m_scanType;
     MCUWidth = image_info.m_MCUWidth;
     MCUHeight = image_info.m_MCUHeight;
-
     return decode_mcu();
 }
 
@@ -1320,16 +1268,1237 @@ void JPEGDecoder::abort(void) {
     is_available = 0;
     if(pImage) delete pImage;
     pImage = NULL;
-
     if (jpg_source == JPEG_SD_FILE) if (g_pInFileSd) g_pInFileSd.close();
 }
+// JPEGDecoder picojpeg
+int16_t JPEGDecoder::replicateSignBit16(int8_t n){
+   switch (n){
+      case 0:  return 0x0000;
+      case 1:  return 0x8000;
+      case 2:  return 0xC000;
+      case 3:  return 0xE000;
+      case 4:  return 0xF000;
+      case 5:  return 0xF800;
+      case 6:  return 0xFC00;
+      case 7:  return 0xFE00;
+      case 8:  return 0xFF00;
+      case 9:  return 0xFF80;
+      case 10: return 0xFFC0;
+      case 11: return 0xFFE0;
+      case 12: return 0xFFF0;
+      case 13: return 0xFFF8;
+      case 14: return 0xFFFC;
+      case 15: return 0xFFFE;
+      default: return 0xFFFF;
+   }
+}
 
+//------------------------------------------------------------------------------
+void JPEGDecoder::fillInBuf(void){
+   unsigned char status;
+   // Reserve a few bytes at the beginning of the buffer for putting back ("stuffing") chars.
+   gInBufOfs = 4;
+   gInBufLeft = 0;
+   status = (*g_pNeedBytesCallback)(gInBuf + gInBufOfs, PJPG_MAX_IN_BUF_SIZE - gInBufOfs, &gInBufLeft, g_pCallback_data);
+   if (status){
+      // The user provided need bytes callback has indicated an error, so record the error and continue trying to decode.
+      // The highest level pjpeg entrypoints will catch the error and return the non-zero status.
+      gCallbackStatus = status;
+   }
+}
+//------------------------------------------------------------------------------
 
+uint16_t JPEGDecoder::getBits(uint8_t numBits, uint8_t FFCheck){
+   uint8_t origBits = numBits;
+   uint16_t ret = gBitBuf;
+   if (numBits > 8)   {
+      numBits -= 8;
+      gBitBuf <<= gBitsLeft;
+      gBitBuf |= getOctet(FFCheck);
+      gBitBuf <<= (8 - gBitsLeft);
+      ret = (ret & 0xFF00) | (gBitBuf >> 8);
+   }
+   if (gBitsLeft < numBits){
+      gBitBuf <<= gBitsLeft;
+      gBitBuf |= getOctet(FFCheck);
+      gBitBuf <<= (numBits - gBitsLeft);
+      gBitsLeft = 8 - (numBits - gBitsLeft);
+   }
+   else{
+      gBitsLeft = (uint8_t)(gBitsLeft - numBits);
+      gBitBuf <<= numBits;
+   }
+   return ret >> (16 - origBits);
+}
+//------------------------------------------------------------------------------
 
+uint16_t JPEGDecoder::getExtendTest(uint8_t i){
+   switch (i){
+      case 0: return 0;
+      case 1: return 0x0001;
+      case 2: return 0x0002;
+      case 3: return 0x0004;
+      case 4: return 0x0008;
+      case 5: return 0x0010;
+      case 6: return 0x0020;
+      case 7: return 0x0040;
+      case 8:  return 0x0080;
+      case 9:  return 0x0100;
+      case 10: return 0x0200;
+      case 11: return 0x0400;
+      case 12: return 0x0800;
+      case 13: return 0x1000;
+      case 14: return 0x2000;
+      case 15: return 0x4000;
+      default: return 0;
+   }
+}
+//------------------------------------------------------------------------------
+int16_t JPEGDecoder::getExtendOffset(uint8_t i){
+   switch (i){
+      case 0: return 0;
+      case 1: return ((-1)<<1) + 1;
+      case 2: return ((-1)<<2) + 1;
+      case 3: return ((-1)<<3) + 1;
+      case 4: return ((-1)<<4) + 1;
+      case 5: return ((-1)<<5) + 1;
+      case 6: return ((-1)<<6) + 1;
+      case 7: return ((-1)<<7) + 1;
+      case 8: return ((-1)<<8) + 1;
+      case 9: return ((-1)<<9) + 1;
+      case 10: return ((-1)<<10) + 1;
+      case 11: return ((-1)<<11) + 1;
+      case 12: return ((-1)<<12) + 1;
+      case 13: return ((-1)<<13) + 1;
+      case 14: return ((-1)<<14) + 1;
+      case 15: return ((-1)<<15) + 1;
+      default: return 0;
+   }
+}
+//------------------------------------------------------------------------------
+
+void JPEGDecoder::huffCreate(const uint8_t* pBits, HuffTable* pHuffTable){
+   uint8_t  i = 0, j=0;
+   uint16_t code = 0;
+
+   for ( ; ; ){
+       uint8_t num = pBits[i];
+       if (!num){
+           pHuffTable->mMinCode[i] = 0x0000;
+           pHuffTable->mMaxCode[i] = 0xFFFF;
+           pHuffTable->mValPtr[i] = 0;
+       }
+       else{
+           pHuffTable->mMinCode[i] = code;
+           pHuffTable->mMaxCode[i] = code + num - 1;
+           pHuffTable->mValPtr[i] = j;
+           j = (uint8_t)(j + num);
+           code = (uint16_t)(code + num);
+      }
+      code <<= 1;
+      i++;
+      if (i > 15) break;
+   }
+}
+//------------------------------------------------------------------------------
+JPEGDecoder::HuffTable* JPEGDecoder::getHuffTable(uint8_t index){
+    // 0-1 = DC
+    // 2-3 = AC
+    switch (index){
+        case 0: return &gHuffTab0;
+        case 1: return &gHuffTab1;
+        case 2: return &gHuffTab2;
+        case 3: return &gHuffTab3;
+        default: return 0;
+    }
+}
+//------------------------------------------------------------------------------
+uint8_t* JPEGDecoder::getHuffVal(uint8_t index){
+    // 0-1 = DC
+    // 2-3 = AC
+    switch (index){
+        case 0: return gHuffVal0;
+        case 1: return gHuffVal1;
+        case 2: return gHuffVal2;
+        case 3: return gHuffVal3;
+        default: return 0;
+    }
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::readDHTMarker(void){
+    uint8_t bits[16];
+    uint16_t left = getBits1(16);
+    if (left < 2) return PJPG_BAD_DHT_MARKER;
+    left -= 2;
+    while(left){
+        uint8_t i, tableIndex, index;
+        uint8_t* pHuffVal;
+        HuffTable* pHuffTable;
+        uint16_t count, totalRead;
+        index = (uint8_t)getBits1(8);
+
+        if(((index & 0xF) > 1) || ((index & 0xF0) > 0x10)) return PJPG_BAD_DHT_INDEX;
+
+        tableIndex = ((index >> 3) & 2) + (index & 1);
+        pHuffTable = getHuffTable(tableIndex);
+        pHuffVal = getHuffVal(tableIndex);
+        gValidHuffTables |= (1 << tableIndex);
+        count = 0;
+        for(i = 0; i <= 15; i++){
+            uint8_t n = (uint8_t)getBits1(8);
+            bits[i] = n;
+            count = (uint16_t)(count + n);
+        }
+        if(count > getMaxHuffCodes(tableIndex)) return PJPG_BAD_DHT_COUNTS;
+        for(i = 0; i < count; i++) pHuffVal[i] = (uint8_t)getBits1(8);
+        totalRead = 1 + 16 + count;
+        if (left < totalRead) return PJPG_BAD_DHT_MARKER;
+        left = (uint16_t)(left - totalRead);
+        huffCreate(bits, pHuffTable);
+    }
+    return 0;
+}
+//------------------------------------------------------------------------------
+//void JPEGDecoder::createWinogradQuant(int16_t* pQuant);
+uint8_t JPEGDecoder::readDQTMarker(void){
+    uint16_t left = getBits1(16);
+    if (left < 2) return PJPG_BAD_DQT_MARKER;
+    left -= 2;
+    while (left){
+        uint8_t i;
+        uint8_t n = (uint8_t)getBits1(8);
+        uint8_t prec = n >> 4;
+        uint16_t totalRead;
+
+        n &= 0x0F;
+        if (n > 1) return PJPG_BAD_DQT_TABLE;
+        gValidQuantTables |= (n ? 2 : 1);
+        // read quantization entries, in zag order
+        for (i = 0; i < 64; i++){
+            uint16_t temp = getBits1(8);
+            if(prec) temp = (temp << 8) + getBits1(8);
+            if (n) gQuant1[i] = (int16_t)temp;
+        else
+            gQuant0[i] = (int16_t)temp;
+        }
+        createWinogradQuant(n ? gQuant1 : gQuant0);
+        totalRead = 64 + 1;
+        if(prec) totalRead += 64;
+        if(left < totalRead) return PJPG_BAD_DQT_LENGTH;
+        left = (uint16_t)(left - totalRead);
+    }
+    return 0;
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::readSOFMarker(void){
+    uint8_t i;
+    uint16_t left = getBits1(16);
+
+    if (getBits1(8) != 8) return PJPG_BAD_PRECISION;
+    gImageYSize = getBits1(16);
+    if((!gImageYSize) || (gImageYSize > PJPG_MAX_HEIGHT)) return PJPG_BAD_HEIGHT;
+    gImageXSize = getBits1(16);
+    if((!gImageXSize) || (gImageXSize > PJPG_MAX_WIDTH)) return PJPG_BAD_WIDTH;
+    gCompsInFrame = (uint8_t)getBits1(8);
+    if(gCompsInFrame > 3) return PJPG_TOO_MANY_COMPONENTS;
+    if (left != (gCompsInFrame + gCompsInFrame + gCompsInFrame + 8)) return PJPG_BAD_SOF_LENGTH;
+    for (i = 0; i < gCompsInFrame; i++){
+        gCompIdent[i] = (uint8_t)getBits1(8);
+        gCompHSamp[i] = (uint8_t)getBits1(4);
+        gCompVSamp[i] = (uint8_t)getBits1(4);
+        gCompQuant[i] = (uint8_t)getBits1(8);
+        if(gCompQuant[i] > 1) return PJPG_UNSUPPORTED_QUANT_TABLE;
+    }
+    return 0;
+}
+//------------------------------------------------------------------------------
+// Used to skip unrecognized markers.
+uint8_t JPEGDecoder::skipVariableMarker(void){
+    uint16_t left = getBits1(16);
+    if (left < 2) return PJPG_BAD_VARIABLE_MARKER;
+    left -= 2;
+    while(left){getBits1(8); left--;}
+    return 0;
+}
+//------------------------------------------------------------------------------
+// Read a define restart interval (DRI) marker.
+uint8_t JPEGDecoder::readDRIMarker(void){
+    if (getBits1(16) != 4) return PJPG_BAD_DRI_LENGTH;
+    gRestartInterval = getBits1(16);
+    return 0;
+}
+//------------------------------------------------------------------------------
+// Read a start of scan (SOS) marker.
+uint8_t JPEGDecoder::readSOSMarker(void){
+    uint8_t i;
+    uint16_t left = getBits1(16);
+    uint8_t successive_high __attribute__((unused));
+    uint8_t successive_low  __attribute__((unused));
+    uint8_t spectral_end    __attribute__((unused));
+    uint8_t spectral_start  __attribute__((unused));
+
+    gCompsInScan = (uint8_t)getBits1(8);
+    left -= 3;
+    if((left!=(gCompsInScan+gCompsInScan+3))||(gCompsInScan<1)||(gCompsInScan>PJPG_MAXCOMPSINSCAN)) return PJPG_BAD_SOS_LENGTH;
+    for (i = 0; i < gCompsInScan; i++){
+        uint8_t cc = (uint8_t)getBits1(8);
+        uint8_t c  = (uint8_t)getBits1(8);
+        uint8_t ci;
+        left -= 2;
+        for(ci = 0; ci < gCompsInFrame; ci++) if(cc == gCompIdent[ci]) break;
+        if(ci >= gCompsInFrame) return PJPG_BAD_SOS_COMP_ID;
+        gCompList[i]   = ci;
+        gCompDCTab[ci] = (c >> 4) & 15;
+        gCompACTab[ci] = (c & 15);
+    }
+    spectral_start  = (uint8_t)getBits1(8);
+    spectral_end    = (uint8_t)getBits1(8);
+    successive_high = (uint8_t)getBits1(4);
+    successive_low  = (uint8_t)getBits1(4);
+    left -= 3;
+    while(left){getBits1(8); left--;}
+    return 0;
+
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::nextMarker(void){
+   uint8_t c;
+   uint8_t bytes = 0;
+
+   do{
+       do{
+           bytes++;
+           c = (uint8_t)getBits1(8);
+       } while (c != 0xFF);
+       do{
+           c = (uint8_t)getBits1(8);
+       } while (c == 0xFF);
+   } while (c == 0);
+
+   // If bytes > 0 here, there where extra bytes before the marker (not good).
+   return c;
+}
+//------------------------------------------------------------------------------
+// Process markers. Returns when an SOFx, SOI, EOI, or SOS marker is
+// encountered.
+uint8_t JPEGDecoder::processMarkers(uint8_t* pMarker){
+    for( ; ; ){
+        uint8_t c = nextMarker();
+
+        switch (c){
+         case M_SOF0:
+         case M_SOF1:
+         case M_SOF2:
+         case M_SOF3:
+         case M_SOF5:
+         case M_SOF6:
+         case M_SOF7:
+         // case M_JPG:
+         case M_SOF9:
+         case M_SOF10:
+         case M_SOF11:
+         case M_SOF13:
+         case M_SOF14:
+         case M_SOF15:
+         case M_SOI:
+         case M_EOI:
+         case M_SOS:{*pMarker = c; return 0;}
+         case M_DHT:{readDHTMarker(); break;}
+         // Sorry, no arithmetic support at this time. Dumb patents!
+         case M_DAC:{return PJPG_NO_ARITHMITIC_SUPPORT;}
+         case M_DQT:{readDQTMarker(); break;}
+         case M_DRI:{readDRIMarker(); break;}
+         //case M_APP0:  /* no need to read the JFIF marker */
+         case M_JPG:
+         case M_RST0:    /* no parameters */
+         case M_RST1:
+         case M_RST2:
+         case M_RST3:
+         case M_RST4:
+         case M_RST5:
+         case M_RST6:
+         case M_RST7:
+         case M_TEM:{return PJPG_UNEXPECTED_MARKER;}
+         default:    /* must be DNL, DHP, EXP, APPn, JPGn, COM, or RESn or APP0 */
+         {
+            skipVariableMarker();
+            break;
+         }
+      }
+   }
+   return 0;
+}
+//------------------------------------------------------------------------------
+// Finds the start of image (SOI) marker.
+uint8_t JPEGDecoder::locateSOIMarker(void){
+   uint16_t bytesleft;
+   uint8_t lastchar = (uint8_t)getBits1(8);
+   uint8_t thischar = (uint8_t)getBits1(8);
+   /* ok if it's a normal JPEG file without a special header */
+   if ((lastchar == 0xFF) && (thischar == M_SOI)) return 0;
+   bytesleft = 4096; //512;
+   for( ; ; ){
+       if (--bytesleft == 0) return PJPG_NOT_JPEG;
+       lastchar = thischar;
+       thischar = (uint8_t)getBits1(8);
+       if(lastchar == 0xFF){
+           if(thischar == M_SOI) break;
+           else if (thischar == M_EOI) return PJPG_NOT_JPEG; //getBits1 will keep returning M_EOI if we read past the end
+       }
+   }
+   /* Check the next character after marker: if it's not 0xFF, it can't
+   be the start of the next marker, so the file is bad */
+   thischar = (uint8_t)((gBitBuf >> 8) & 0xFF);
+   if (thischar != 0xFF) return PJPG_NOT_JPEG;
+   return 0;
+}
+//------------------------------------------------------------------------------
+// Find a start of frame (SOF) marker.
+uint8_t JPEGDecoder::locateSOFMarker(void){
+    uint8_t c;
+    uint8_t status = locateSOIMarker();
+    if(status) return status;
+    status = processMarkers(&c);
+    if(status) return status;
+    switch(c){
+       case M_SOF2:{
+          // Progressive JPEG - not supported by JPEGDecoder (would require too
+          // much memory, or too many IDCT's for embedded systems).
+          return PJPG_UNSUPPORTED_MODE;
+       }
+       case M_SOF0:{  /* baseline DCT */
+          status = readSOFMarker();
+          if (status) return status;
+          break;
+       }
+       case M_SOF9:{return PJPG_NO_ARITHMITIC_SUPPORT;}
+       case M_SOF1:  /* extended sequential DCT */
+       default:{
+           return PJPG_UNSUPPORTED_MARKER;
+       }
+    }
+    return 0;
+}
+//------------------------------------------------------------------------------
+// Find a start of scan (SOS) marker.
+uint8_t JPEGDecoder::locateSOSMarker(uint8_t* pFoundEOI){
+    uint8_t c;
+    uint8_t status;
+
+    *pFoundEOI = 0;
+    status = processMarkers(&c);
+    if(status) return status;
+    if(c == M_EOI){
+        *pFoundEOI = 1;
+        return 0;
+    }
+    else if (c != M_SOS) return PJPG_UNEXPECTED_MARKER;
+    return readSOSMarker();
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::init(void){
+    gImageXSize = 0;
+    gImageYSize = 0;
+    gCompsInFrame = 0;
+    gRestartInterval = 0;
+    gCompsInScan = 0;
+    gValidHuffTables = 0;
+    gValidQuantTables = 0;
+    gTemFlag = 0;
+    gInBufOfs = 0;
+    gInBufLeft = 0;
+    gBitBuf = 0;
+    gBitsLeft = 8;
+
+    getBits1(8);
+    getBits1(8);
+
+    return 0;
+}
+//------------------------------------------------------------------------------
+// This method throws back into the stream any bytes that where read
+// into the bit buffer during initial marker scanning.
+void JPEGDecoder::fixInBuffer(void){
+    /* In case any 0xFF's where pulled into the buffer during marker scanning */
+    if(gBitsLeft > 0) stuffChar((uint8_t)gBitBuf);
+    stuffChar((uint8_t)(gBitBuf >> 8));
+    gBitsLeft = 8;
+    getBits2(8);
+    getBits2(8);
+}
+//------------------------------------------------------------------------------
+// Restart interval processing.
+uint8_t JPEGDecoder::processRestart(void){
+    // Let's scan a little bit to find the marker, but not _too_ far.
+    // 1536 is a "fudge factor" that determines how much to scan.
+    uint16_t i;
+    uint8_t c = 0;
+    for(i = 1536; i > 0; i--) if (getChar() == 0xFF) break;
+    if(i==0) return PJPG_BAD_RESTART_MARKER;
+    for( ; i > 0; i--) if ((c = getChar()) != 0xFF) break;
+    if(i==0) return PJPG_BAD_RESTART_MARKER;
+    // Is it the expected marker? If not, something bad happened.
+    if(c != (gNextRestartNum + M_RST0)) return PJPG_BAD_RESTART_MARKER;
+    // Reset each component's DC prediction values.
+    gLastDC[0] = 0;
+    gLastDC[1] = 0;
+    gLastDC[2] = 0;
+    gRestartsLeft = gRestartInterval;
+    gNextRestartNum = (gNextRestartNum + 1) & 7;
+    // Get the bit buffer going again
+    gBitsLeft = 8;
+    getBits2(8);
+    getBits2(8);
+    return 0;
+}
+//------------------------------------------------------------------------------
+// FIXME: findEOI() is not actually called at the end of the image
+// (it's optional, and probably not needed on embedded devices)
+uint8_t JPEGDecoder::findEOI(void){
+    uint8_t c;
+    uint8_t status;
+    // Prime the bit buffer
+    gBitsLeft = 8;
+    getBits1(8);
+    getBits1(8);
+
+    // The next marker _should_ be EOI
+    status = processMarkers(&c);
+    if(status) return status;
+    else if(gCallbackStatus) return gCallbackStatus;
+    //gTotalBytesRead -= in_buf_left;
+    if(c!=M_EOI) return PJPG_UNEXPECTED_MARKER;
+    return 0;
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::checkHuffTables(void){
+    uint8_t i;
+    for(i = 0; i < gCompsInScan; i++){
+        uint8_t compDCTab = gCompDCTab[gCompList[i]];
+        uint8_t compACTab = gCompACTab[gCompList[i]] + 2;
+        if(((gValidHuffTables & (1 << compDCTab)) == 0)||((gValidHuffTables & (1 << compACTab)) == 0))
+            return PJPG_UNDEFINED_HUFF_TABLE;
+    }
+    return 0;
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::checkQuantTables(void){
+    uint8_t i;
+    for(i=0; i<gCompsInScan; i++){
+      uint8_t compQuantMask = gCompQuant[gCompList[i]] ? 2 : 1;
+      if((gValidQuantTables & compQuantMask)==0) return PJPG_UNDEFINED_QUANT_TABLE;
+    }
+    return 0;
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::initScan(void){
+    uint8_t foundEOI;
+    uint8_t status = locateSOSMarker(&foundEOI);
+    if(status) return status;
+    if(foundEOI) return PJPG_UNEXPECTED_MARKER;
+    status=checkHuffTables();
+    if(status) return status;
+    status=checkQuantTables();
+    if(status) return status;
+    gLastDC[0] = 0;
+    gLastDC[1] = 0;
+    gLastDC[2] = 0;
+    if(gRestartInterval){
+        gRestartsLeft = gRestartInterval;
+        gNextRestartNum = 0;
+    }
+    fixInBuffer();
+    return 0;
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::initFrame(void){
+    if (gCompsInFrame==1){
+        if((gCompHSamp[0]!=1)||(gCompVSamp[0]!=1)) return PJPG_UNSUPPORTED_SAMP_FACTORS;
+        gScanType=PJPG_GRAYSCALE;
+        gMaxBlocksPerMCU = 1;
+        gMCUOrg[0] = 0;
+        gMaxMCUXSize     = 8;
+        gMaxMCUYSize     = 8;
+    }
+    else if(gCompsInFrame==3){
+        if(((gCompHSamp[1]!=1)||(gCompVSamp[1]!=1))||((gCompHSamp[2]!=1)||(gCompVSamp[2]!=1)))
+            return PJPG_UNSUPPORTED_SAMP_FACTORS;
+        if((gCompHSamp[0]==1)&&(gCompVSamp[0]==1)){
+            gScanType = PJPG_YH1V1;
+            gMaxBlocksPerMCU = 3;
+            gMCUOrg[0] = 0;
+            gMCUOrg[1] = 1;
+            gMCUOrg[2] = 2;
+            gMaxMCUXSize = 8;
+            gMaxMCUYSize = 8;
+        }
+        else if((gCompHSamp[0]==1)&&(gCompVSamp[0]==2)){
+            gScanType = PJPG_YH1V2;
+            gMaxBlocksPerMCU = 4;
+            gMCUOrg[0] = 0;
+            gMCUOrg[1] = 0;
+            gMCUOrg[2] = 1;
+            gMCUOrg[3] = 2;
+            gMaxMCUXSize = 8;
+            gMaxMCUYSize = 16;
+        }
+        else if((gCompHSamp[0]==2)&&(gCompVSamp[0]==1)){
+            gScanType = PJPG_YH2V1;
+            gMaxBlocksPerMCU = 4;
+            gMCUOrg[0] = 0;
+            gMCUOrg[1] = 0;
+            gMCUOrg[2] = 1;
+            gMCUOrg[3] = 2;
+            gMaxMCUXSize = 16;
+            gMaxMCUYSize = 8;
+        }
+        else if((gCompHSamp[0]==2)&&(gCompVSamp[0]==2)){
+            gScanType = PJPG_YH2V2;
+            gMaxBlocksPerMCU = 6;
+            gMCUOrg[0] = 0;
+            gMCUOrg[1] = 0;
+            gMCUOrg[2] = 0;
+            gMCUOrg[3] = 0;
+            gMCUOrg[4] = 1;
+            gMCUOrg[5] = 2;
+            gMaxMCUXSize = 16;
+            gMaxMCUYSize = 16;
+        }
+        else return PJPG_UNSUPPORTED_SAMP_FACTORS;
+    }
+    else return PJPG_UNSUPPORTED_COLORSPACE;
+    gMaxMCUSPerRow = (gImageXSize + (gMaxMCUXSize - 1)) >> ((gMaxMCUXSize == 8) ? 3 : 4);
+    gMaxMCUSPerCol = (gImageYSize + (gMaxMCUYSize - 1)) >> ((gMaxMCUYSize == 8) ? 3 : 4);
+    gNumMCUSRemaining = gMaxMCUSPerRow * gMaxMCUSPerCol;
+    return 0;
+}
+//----------------------------------------------------------------------------
+// Winograd IDCT: 5 multiplies per row/col, up to 80 muls for the 2D IDCT
+#define PJPG_DCT_SCALE (1U << PJPG_DCT_SCALE_BITS)
+//#define PJPG_DESCALE(x) PJPG_ARITH_SHIFT_RIGHT_N_16(((x) + (1U << (PJPG_DCT_SCALE_BITS - 1))), PJPG_DCT_SCALE_BITS)
+#define PJPG_WFIX(x) ((x) * PJPG_DCT_SCALE + 0.5f)
+
+// Multiply quantization matrix by the Winograd IDCT scale factors
+void JPEGDecoder::createWinogradQuant(int16_t* pQuant){
+    uint8_t i;
+    for(i=0; i<64; i++){
+        long x = pQuant[i];
+        x *= gWinogradQuant[i];
+        pQuant[i]=(int16_t)((x+(1<<(PJPG_WINOGRAD_QUANT_SCALE_BITS-PJPG_DCT_SCALE_BITS-1)))>>(PJPG_WINOGRAD_QUANT_SCALE_BITS-PJPG_DCT_SCALE_BITS));
+    }
+}
+
+void JPEGDecoder::idctRows(void){
+    uint8_t i;
+    int16_t* pSrc = gCoeffBuf;
+    for(i=0; i<8; i++){
+        if((pSrc[1] | pSrc[2] | pSrc[3] | pSrc[4] | pSrc[5] | pSrc[6] | pSrc[7]) == 0){
+            // Short circuit the 1D IDCT if only the DC component is non-zero
+            int16_t src0 = *pSrc;
+            *(pSrc+1) = src0;
+            *(pSrc+2) = src0;
+            *(pSrc+3) = src0;
+            *(pSrc+4) = src0;
+            *(pSrc+5) = src0;
+            *(pSrc+6) = src0;
+            *(pSrc+7) = src0;
+        }
+        else{
+            int16_t src4 = *(pSrc+5);
+            int16_t src7 = *(pSrc+3);
+            int16_t x4  = src4 - src7;
+            int16_t x7  = src4 + src7;
+            int16_t src5 = *(pSrc+1);
+            int16_t src6 = *(pSrc+7);
+            int16_t x5  = src5 + src6;
+            int16_t x6  = src5 - src6;
+            int16_t tmp1 = imul_b5(x4 - x6);
+            int16_t stg26 = imul_b4(x6) - tmp1;
+            int16_t x24 = tmp1 - imul_b2(x4);
+            int16_t x15 = x5 - x7;
+            int16_t x17 = x5 + x7;
+            int16_t tmp2 = stg26 - x17;
+            int16_t tmp3 = imul_b1_b3(x15) - tmp2;
+            int16_t x44 = tmp3 + x24;
+            int16_t src0 = *(pSrc+0);
+            int16_t src1 = *(pSrc+4);
+            int16_t x30 = src0 + src1;
+            int16_t x31 = src0 - src1;
+            int16_t src2 = *(pSrc+2);
+            int16_t src3 = *(pSrc+6);
+            int16_t x12 = src2 - src3;
+            int16_t x13 = src2 + src3;
+            int16_t x32 = imul_b1_b3(x12) - x13;
+            int16_t x40 = x30 + x13;
+            int16_t x43 = x30 - x13;
+            int16_t x41 = x31 + x32;
+            int16_t x42 = x31 - x32;
+
+            *(pSrc+0) = x40 + x17;
+            *(pSrc+1) = x41 + tmp2;
+            *(pSrc+2) = x42 + tmp3;
+            *(pSrc+3) = x43 - x44;
+            *(pSrc+4) = x43 + x44;
+            *(pSrc+5) = x42 - tmp3;
+            *(pSrc+6) = x41 - tmp2;
+            *(pSrc+7) = x40 - x17;
+        }
+        pSrc += 8;
+    }
+}
+
+void JPEGDecoder::idctCols(void){
+    uint8_t i;
+    int16_t* pSrc = gCoeffBuf;
+    for(i=0; i<8; i++){
+        if((pSrc[1*8] | pSrc[2*8] | pSrc[3*8] | pSrc[4*8] | pSrc[5*8] | pSrc[6*8] | pSrc[7*8]) == 0){
+            // Short circuit the 1D IDCT if only the DC component is non-zero
+            uint8_t c = clamp(PJPG_DESCALE(*pSrc) + 128);
+            *(pSrc+0*8) = c;
+            *(pSrc+1*8) = c;
+            *(pSrc+2*8) = c;
+            *(pSrc+3*8) = c;
+            *(pSrc+4*8) = c;
+            *(pSrc+5*8) = c;
+            *(pSrc+6*8) = c;
+            *(pSrc+7*8) = c;
+        }
+        else{
+            int16_t src4 = *(pSrc+5*8);
+            int16_t src7 = *(pSrc+3*8);
+            int16_t x4  = src4 - src7;
+            int16_t x7  = src4 + src7;
+            int16_t src5 = *(pSrc+1*8);
+            int16_t src6 = *(pSrc+7*8);
+            int16_t x5  = src5 + src6;
+            int16_t x6  = src5 - src6;
+            int16_t tmp1 = imul_b5(x4 - x6);
+            int16_t stg26 = imul_b4(x6) - tmp1;
+            int16_t x24 = tmp1 - imul_b2(x4);
+            int16_t x15 = x5 - x7;
+            int16_t x17 = x5 + x7;
+            int16_t tmp2 = stg26 - x17;
+            int16_t tmp3 = imul_b1_b3(x15) - tmp2;
+            int16_t x44 = tmp3 + x24;
+            int16_t src0 = *(pSrc+0*8);
+            int16_t src1 = *(pSrc+4*8);
+            int16_t x30 = src0 + src1;
+            int16_t x31 = src0 - src1;
+            int16_t src2 = *(pSrc+2*8);
+            int16_t src3 = *(pSrc+6*8);
+            int16_t x12 = src2 - src3;
+            int16_t x13 = src2 + src3;
+            int16_t x32 = imul_b1_b3(x12) - x13;
+            int16_t x40 = x30 + x13;
+            int16_t x43 = x30 - x13;
+            int16_t x41 = x31 + x32;
+            int16_t x42 = x31 - x32;
+            // descale, convert to unsigned and clamp to 8-bit
+            *(pSrc+0*8) = clamp(PJPG_DESCALE(x40 + x17)  + 128);
+            *(pSrc+1*8) = clamp(PJPG_DESCALE(x41 + tmp2) + 128);
+            *(pSrc+2*8) = clamp(PJPG_DESCALE(x42 + tmp3) + 128);
+            *(pSrc+3*8) = clamp(PJPG_DESCALE(x43 - x44)  + 128);
+            *(pSrc+4*8) = clamp(PJPG_DESCALE(x43 + x44)  + 128);
+            *(pSrc+5*8) = clamp(PJPG_DESCALE(x42 - tmp3) + 128);
+            *(pSrc+6*8) = clamp(PJPG_DESCALE(x41 - tmp2) + 128);
+            *(pSrc+7*8) = clamp(PJPG_DESCALE(x40 - x17)  + 128);
+        }
+        pSrc++;
+    }
+}
+/*----------------------------------------------------------------------------*/
+// Cb upsample and accumulate, 4x4 to 8x8
+void JPEGDecoder::upsampleCb(uint8_t srcOfs, uint8_t dstOfs){
+    // Cb - affects G and B
+    uint8_t x, y;
+    int16_t* pSrc = gCoeffBuf + srcOfs;
+    uint8_t* pDstG = gMCUBufG + dstOfs;
+    uint8_t* pDstB = gMCUBufB + dstOfs;
+    for(y=0; y<4; y++){
+        for(x=0; x<4; x++){
+            uint8_t cb = (uint8_t)*pSrc++;
+            int16_t cbG, cbB;
+            cbG = ((cb * 88U) >> 8U) - 44U;
+            pDstG[0] = subAndClamp(pDstG[0], cbG);
+            pDstG[1] = subAndClamp(pDstG[1], cbG);
+            pDstG[8] = subAndClamp(pDstG[8], cbG);
+            pDstG[9] = subAndClamp(pDstG[9], cbG);
+            cbB = (cb + ((cb * 198U) >> 8U)) - 227U;
+            pDstB[0] = addAndClamp(pDstB[0], cbB);
+            pDstB[1] = addAndClamp(pDstB[1], cbB);
+            pDstB[8] = addAndClamp(pDstB[8], cbB);
+            pDstB[9] = addAndClamp(pDstB[9], cbB);
+            pDstG += 2;
+            pDstB += 2;
+        }
+        pSrc = pSrc - 4 + 8;
+        pDstG = pDstG - 8 + 16;
+        pDstB = pDstB - 8 + 16;
+    }
+}
+/*----------------------------------------------------------------------------*/
+// Cb upsample and accumulate, 4x8 to 8x8
+void JPEGDecoder::upsampleCbH(uint8_t srcOfs, uint8_t dstOfs){
+    // Cb - affects G and B
+    uint8_t x, y;
+    int16_t* pSrc = gCoeffBuf + srcOfs;
+    uint8_t* pDstG = gMCUBufG + dstOfs;
+    uint8_t* pDstB = gMCUBufB + dstOfs;
+    for(y=0; y<8; y++){
+        for(x=0; x<4; x++){
+            uint8_t cb = (uint8_t)*pSrc++;
+            int16_t cbG, cbB;
+            cbG = ((cb * 88U) >> 8U) - 44U;
+            pDstG[0] = subAndClamp(pDstG[0], cbG);
+            pDstG[1] = subAndClamp(pDstG[1], cbG);
+            cbB = (cb + ((cb * 198U) >> 8U)) - 227U;
+            pDstB[0] = addAndClamp(pDstB[0], cbB);
+            pDstB[1] = addAndClamp(pDstB[1], cbB);
+            pDstG += 2;
+            pDstB += 2;
+        }
+        pSrc = pSrc - 4 + 8;
+    }
+}
+/*----------------------------------------------------------------------------*/
+// Cb upsample and accumulate, 8x4 to 8x8
+void JPEGDecoder::upsampleCbV(uint8_t srcOfs, uint8_t dstOfs){
+    // Cb - affects G and B
+    uint8_t x, y;
+    int16_t* pSrc = gCoeffBuf + srcOfs;
+    uint8_t* pDstG = gMCUBufG + dstOfs;
+    uint8_t* pDstB = gMCUBufB + dstOfs;
+    for(y=0; y<4; y++){
+        for(x=0; x<8; x++){
+            uint8_t cb = (uint8_t)*pSrc++;
+            int16_t cbG, cbB;
+            cbG = ((cb * 88U) >> 8U) - 44U;
+            pDstG[0] = subAndClamp(pDstG[0], cbG);
+            pDstG[8] = subAndClamp(pDstG[8], cbG);
+            cbB = (cb + ((cb * 198U) >> 8U)) - 227U;
+            pDstB[0] = addAndClamp(pDstB[0], cbB);
+            pDstB[8] = addAndClamp(pDstB[8], cbB);
+            ++pDstG;
+            ++pDstB;
+        }
+        pDstG = pDstG - 8 + 16;
+        pDstB = pDstB - 8 + 16;
+    }
+}
+/*----------------------------------------------------------------------------*/
+// Cr upsample and accumulate, 4x4 to 8x8
+void JPEGDecoder::upsampleCr(uint8_t srcOfs, uint8_t dstOfs){
+    // Cr - affects R and G
+    uint8_t x, y;
+    int16_t* pSrc = gCoeffBuf + srcOfs;
+    uint8_t* pDstR = gMCUBufR + dstOfs;
+    uint8_t* pDstG = gMCUBufG + dstOfs;
+    for(y=0; y<4; y++){
+        for(x=0; x<4; x++){
+            uint8_t cr = (uint8_t)*pSrc++;
+            int16_t crR, crG;
+            crR = (cr + ((cr * 103U) >> 8U)) - 179;
+            pDstR[0] = addAndClamp(pDstR[0], crR);
+            pDstR[1] = addAndClamp(pDstR[1], crR);
+            pDstR[8] = addAndClamp(pDstR[8], crR);
+            pDstR[9] = addAndClamp(pDstR[9], crR);
+            crG = ((cr * 183U) >> 8U) - 91;
+            pDstG[0] = subAndClamp(pDstG[0], crG);
+            pDstG[1] = subAndClamp(pDstG[1], crG);
+            pDstG[8] = subAndClamp(pDstG[8], crG);
+            pDstG[9] = subAndClamp(pDstG[9], crG);
+            pDstR += 2;
+            pDstG += 2;
+        }
+        pSrc = pSrc - 4 + 8;
+        pDstR = pDstR - 8 + 16;
+        pDstG = pDstG - 8 + 16;
+    }
+}
+/*----------------------------------------------------------------------------*/
+// Cr upsample and accumulate, 4x8 to 8x8
+void JPEGDecoder::upsampleCrH(uint8_t srcOfs, uint8_t dstOfs){
+    // Cr - affects R and G
+    uint8_t x, y;
+    int16_t* pSrc = gCoeffBuf + srcOfs;
+    uint8_t* pDstR = gMCUBufR + dstOfs;
+    uint8_t* pDstG = gMCUBufG + dstOfs;
+    for(y=0; y<8; y++){
+        for(x=0; x<4; x++){
+            uint8_t cr = (uint8_t)*pSrc++;
+            int16_t crR, crG;
+            crR = (cr + ((cr * 103U) >> 8U)) - 179;
+            pDstR[0] = addAndClamp(pDstR[0], crR);
+            pDstR[1] = addAndClamp(pDstR[1], crR);
+            crG = ((cr * 183U) >> 8U) - 91;
+            pDstG[0] = subAndClamp(pDstG[0], crG);
+            pDstG[1] = subAndClamp(pDstG[1], crG);
+            pDstR += 2;
+            pDstG += 2;
+        }
+        pSrc = pSrc - 4 + 8;
+    }
+}
+/*----------------------------------------------------------------------------*/
+// Cr upsample and accumulate, 8x4 to 8x8
+void JPEGDecoder::upsampleCrV(uint8_t srcOfs, uint8_t dstOfs){
+    // Cr - affects R and G
+    uint8_t x, y;
+    int16_t* pSrc = gCoeffBuf + srcOfs;
+    uint8_t* pDstR = gMCUBufR + dstOfs;
+    uint8_t* pDstG = gMCUBufG + dstOfs;
+    for(y=0; y<4; y++){
+        for(x=0; x<8; x++){
+            uint8_t cr = (uint8_t)*pSrc++;
+            int16_t crR, crG;
+            crR = (cr + ((cr * 103U) >> 8U)) - 179;
+            pDstR[0] = addAndClamp(pDstR[0], crR);
+            pDstR[8] = addAndClamp(pDstR[8], crR);
+            crG = ((cr * 183U) >> 8U) - 91;
+            pDstG[0] = subAndClamp(pDstG[0], crG);
+            pDstG[8] = subAndClamp(pDstG[8], crG);
+            ++pDstR;
+            ++pDstG;
+        }
+        pDstR = pDstR - 8 + 16;
+        pDstG = pDstG - 8 + 16;
+    }
+}
+/*----------------------------------------------------------------------------*/
+// Convert Y to RGB
+void JPEGDecoder::copyY(uint8_t dstOfs){
+    uint8_t i;
+    uint8_t* pRDst = gMCUBufR + dstOfs;
+    uint8_t* pGDst = gMCUBufG + dstOfs;
+    uint8_t* pBDst = gMCUBufB + dstOfs;
+    int16_t* pSrc = gCoeffBuf;
+    for(i=64; i>0; i--){
+        uint8_t c = (uint8_t)*pSrc++;
+        *pRDst++ = c;
+        *pGDst++ = c;
+        *pBDst++ = c;
+    }
+}
+/*----------------------------------------------------------------------------*/
+// Cb convert to RGB and accumulate
+void JPEGDecoder::convertCb(uint8_t dstOfs){
+    uint8_t i;
+    uint8_t* pDstG = gMCUBufG + dstOfs;
+    uint8_t* pDstB = gMCUBufB + dstOfs;
+    int16_t* pSrc = gCoeffBuf;
+    for(i=64; i>0; i--){
+        uint8_t cb = (uint8_t)*pSrc++;
+        int16_t cbG, cbB;
+        cbG = ((cb * 88U) >> 8U) - 44U;
+        pDstG[0] = subAndClamp(pDstG[0], cbG);
+        cbB = (cb + ((cb * 198U) >> 8U)) - 227U;
+        pDstB[0] = addAndClamp(pDstB[0], cbB);
+        ++pDstG;
+        ++pDstB;
+    }
+}
+/*----------------------------------------------------------------------------*/
+// Cr convert to RGB and accumulate
+void JPEGDecoder::convertCr(uint8_t dstOfs){
+    uint8_t i;
+    uint8_t* pDstR = gMCUBufR + dstOfs;
+    uint8_t* pDstG = gMCUBufG + dstOfs;
+    int16_t* pSrc = gCoeffBuf;
+    for(i=64; i>0; i--){
+        uint8_t cr = (uint8_t)*pSrc++;
+        int16_t crR, crG;
+        crR = (cr + ((cr * 103U) >> 8U)) - 179;
+        pDstR[0] = addAndClamp(pDstR[0], crR);
+        crG = ((cr * 183U) >> 8U) - 91;
+        pDstG[0] = subAndClamp(pDstG[0], crG);
+        ++pDstR;
+        ++pDstG;
+    }
+}
+/*----------------------------------------------------------------------------*/
+void JPEGDecoder::transformBlock(uint8_t mcuBlock){
+    idctRows();
+    idctCols();
+    switch (gScanType){
+        case PJPG_GRAYSCALE:{copyY(0); break;}  // MCU size: 1, 1 block per MCU
+        case PJPG_YH1V1:{                       // MCU size: 8x8, 3 blocks per MCU
+                switch(mcuBlock){
+                    case 0:{copyY(0); break;}
+                    case 1:{convertCb(0); break;}
+                    case 2:{convertCr(0); break;}
+                } break;
+        }
+        case PJPG_YH1V2:{                       // MCU size: 8x16, 4 blocks per MCU
+                switch(mcuBlock){
+                    case 0:{copyY(0);   break;}
+                    case 1:{copyY(128); break;}
+                    case 2:{upsampleCbV(0, 0); upsampleCbV(4*8, 128); break;}
+                    case 3:{upsampleCrV(0, 0); upsampleCrV(4*8, 128); break;}
+                } break;
+        }
+        case PJPG_YH2V1:{                       // MCU size: 16x8, 4 blocks per MCU
+                switch(mcuBlock){
+                    case 0:{copyY(0);   break;}
+                    case 1:{copyY(64);  break;}
+                    case 2:{upsampleCbH(0, 0); upsampleCbH(4, 64); break;}
+                    case 3:{upsampleCrH(0, 0); upsampleCrH(4, 64); break;}
+                } break;
+        }
+        case PJPG_YH2V2:{                       // MCU size: 16x16, 6 blocks per MCU
+                switch (mcuBlock){
+                    case 0:{copyY(0);   break;}
+                    case 1:{copyY(64);  break;}
+                    case 2:{copyY(128); break;}
+                    case 3:{copyY(192); break;}
+                    case 4:{upsampleCb(0, 0); upsampleCb(4, 64); upsampleCb(4*8, 128); upsampleCb(4+4*8, 192); break;}
+                    case 5:{upsampleCr(0, 0); upsampleCr(4, 64); upsampleCr(4*8, 128); upsampleCr(4+4*8, 192); break;}
+                } break;
+        }
+    }
+}
+//------------------------------------------------------------------------------
+void JPEGDecoder::transformBlockReduce(uint8_t mcuBlock){
+    uint8_t c = clamp(PJPG_DESCALE(gCoeffBuf[0]) + 128);
+    int16_t cbG, cbB, crR, crG;
+    switch(gScanType){
+        case PJPG_GRAYSCALE:{gMCUBufR[0] = c; break;}   // MCU size: 1, 1 block per MCU
+        case PJPG_YH1V1:{                               // MCU size: 8x8, 3 blocks per MCU
+            switch(mcuBlock){
+                case 0:{gMCUBufR[0] = c; gMCUBufG[0] = c; gMCUBufB[0] = c; break;}
+                case 1:{cbG = ((c * 88U) >> 8U) - 44U;
+                        gMCUBufG[0] = subAndClamp(gMCUBufG[0], cbG);
+                        cbB = (c + ((c * 198U) >> 8U)) - 227U;
+                        gMCUBufB[0] = addAndClamp(gMCUBufB[0], cbB);
+                        break;}
+                case 2:{crR = (c + ((c * 103U) >> 8U)) - 179;
+                        gMCUBufR[0] = addAndClamp(gMCUBufR[0], crR);
+                        crG = ((c * 183U) >> 8U) - 91;
+                        gMCUBufG[0] = subAndClamp(gMCUBufG[0], crG);
+                        break;}
+            } break;
+        }
+        case PJPG_YH1V2:{                               // MCU size: 8x16, 4 blocks per MCU
+            switch(mcuBlock){
+                case 0:{gMCUBufR[0] = c; gMCUBufG[0] = c; gMCUBufB[0] = c; break;}
+                case 1:{gMCUBufR[128] = c; gMCUBufG[128] = c; gMCUBufB[128] = c; break;}
+                case 2:{cbG = ((c * 88U) >> 8U) - 44U;
+                        gMCUBufG[0] = subAndClamp(gMCUBufG[0], cbG);
+                        gMCUBufG[128] = subAndClamp(gMCUBufG[128], cbG);
+                        cbB = (c + ((c * 198U) >> 8U)) - 227U;
+                        gMCUBufB[0] = addAndClamp(gMCUBufB[0], cbB);
+                        gMCUBufB[128] = addAndClamp(gMCUBufB[128], cbB);
+                        break;}
+                case 3:{crR = (c + ((c * 103U) >> 8U)) - 179;
+                        gMCUBufR[0] = addAndClamp(gMCUBufR[0], crR);
+                        gMCUBufR[128] = addAndClamp(gMCUBufR[128], crR);
+                        crG = ((c * 183U) >> 8U) - 91;
+                        gMCUBufG[0] = subAndClamp(gMCUBufG[0], crG);
+                        gMCUBufG[128] = subAndClamp(gMCUBufG[128], crG);
+                        break;}
+            } break;
+        }
+        case PJPG_YH2V1:{                               // MCU size: 16x8, 4 blocks per MCU
+            switch(mcuBlock){
+                case 0:{gMCUBufR[0] = c; gMCUBufG[0] = c; gMCUBufB[0] = c; break;}
+                case 1:{gMCUBufR[64] = c; gMCUBufG[64] = c; gMCUBufB[64] = c; break;}
+                case 2:{cbG = ((c * 88U) >> 8U) - 44U;
+                        gMCUBufG[0] = subAndClamp(gMCUBufG[0], cbG);
+                        gMCUBufG[64] = subAndClamp(gMCUBufG[64], cbG);
+                        cbB = (c + ((c * 198U) >> 8U)) - 227U;
+                        gMCUBufB[0] = addAndClamp(gMCUBufB[0], cbB);
+                        gMCUBufB[64] = addAndClamp(gMCUBufB[64], cbB);
+                        break;}
+                case 3:{crR = (c + ((c * 103U) >> 8U)) - 179;
+                        gMCUBufR[0] = addAndClamp(gMCUBufR[0], crR);
+                        gMCUBufR[64] = addAndClamp(gMCUBufR[64], crR);
+                        crG = ((c * 183U) >> 8U) - 91;
+                        gMCUBufG[0] = subAndClamp(gMCUBufG[0], crG);
+                        gMCUBufG[64] = subAndClamp(gMCUBufG[64], crG);
+                        break;}
+            } break;
+        }
+        case PJPG_YH2V2:{                               // MCU size: 16x16, 6 blocks per MCU
+            switch(mcuBlock){
+                case 0:{gMCUBufR[0] = c; gMCUBufG[0] = c; gMCUBufB[0] = c; break;}
+                case 1:{gMCUBufR[64] = c; gMCUBufG[64] = c; gMCUBufB[64] = c; break;}
+                case 2:{gMCUBufR[128] = c; gMCUBufG[128] = c; gMCUBufB[128] = c; break;}
+                case 3:{gMCUBufR[192] = c; gMCUBufG[192] = c; gMCUBufB[192] = c; break;}
+                case 4:{cbG = ((c * 88U) >> 8U) - 44U;
+                        gMCUBufG[0] = subAndClamp(gMCUBufG[0], cbG);
+                        gMCUBufG[64] = subAndClamp(gMCUBufG[64], cbG);
+                        gMCUBufG[128] = subAndClamp(gMCUBufG[128], cbG);
+                        gMCUBufG[192] = subAndClamp(gMCUBufG[192], cbG);
+                        cbB = (c + ((c * 198U) >> 8U)) - 227U;
+                        gMCUBufB[0] = addAndClamp(gMCUBufB[0], cbB);
+                        gMCUBufB[64] = addAndClamp(gMCUBufB[64], cbB);
+                        gMCUBufB[128] = addAndClamp(gMCUBufB[128], cbB);
+                        gMCUBufB[192] = addAndClamp(gMCUBufB[192], cbB);
+                        break;}
+                case 5:{crR = (c + ((c * 103U) >> 8U)) - 179;
+                        gMCUBufR[0] = addAndClamp(gMCUBufR[0], crR);
+                        gMCUBufR[64] = addAndClamp(gMCUBufR[64], crR);
+                        gMCUBufR[128] = addAndClamp(gMCUBufR[128], crR);
+                        gMCUBufR[192] = addAndClamp(gMCUBufR[192], crR);
+                        crG = ((c * 183U) >> 8U) - 91;
+                        gMCUBufG[0] = subAndClamp(gMCUBufG[0], crG);
+                        gMCUBufG[64] = subAndClamp(gMCUBufG[64], crG);
+                        gMCUBufG[128] = subAndClamp(gMCUBufG[128], crG);
+                        gMCUBufG[192] = subAndClamp(gMCUBufG[192], crG);
+                        break;}
+            } break;
+        }
+    }
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::huffDecode(const HuffTable* pHuffTable, const uint8_t* pHuffVal){
+     uint8_t i = 0; uint8_t j; uint16_t code = getBit();
+
+     // This func only reads a bit at a time, which on modern CPU's is not terribly efficient.
+     // But on microcontrollers without strong integer shifting support this seems like a
+     // more reasonable approach.
+     for ( ; ; ){
+         uint16_t maxCode;
+         if (i == 16) return 0;
+
+         maxCode = pHuffTable->mMaxCode[i];
+         if ((code <= maxCode) && (maxCode != 0xFFFF)) break;
+
+         i++;
+         code <<= 1;
+         code |= getBit();
+     }
+
+     j = pHuffTable->mValPtr[i];
+     j = (uint8_t)(j + (code - pHuffTable->mMinCode[i]));
+     return pHuffVal[j];
+ }
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::decodeNextMCU(void){
+    uint8_t status;
+    uint8_t mcuBlock;
+    if(gRestartInterval){
+        if(gRestartsLeft == 0){
+            status = processRestart();
+            if(status) return status;
+        }
+        gRestartsLeft--;
+    }
+    for(mcuBlock = 0; mcuBlock < gMaxBlocksPerMCU; mcuBlock++){
+        uint8_t componentID = gMCUOrg[mcuBlock];
+        uint8_t compQuant = gCompQuant[componentID];
+        uint8_t compDCTab = gCompDCTab[componentID];
+        uint8_t numExtraBits, compACTab, k;
+        const int16_t* pQ = compQuant ? gQuant1 : gQuant0;
+        uint16_t r, dc;
+        uint8_t s = huffDecode(compDCTab ? &gHuffTab1 : &gHuffTab0, compDCTab ? gHuffVal1 : gHuffVal0);
+        r = 0;
+        numExtraBits = s & 0xF;
+        if(numExtraBits) r = getBits2(numExtraBits);
+        dc = huffExtend(r, s);
+        dc = dc + gLastDC[componentID];
+        gLastDC[componentID] = dc;
+        gCoeffBuf[0] = dc * pQ[0];
+        compACTab = gCompACTab[componentID];
+        if(gReduce){    // Decode, but throw out the AC coefficients in reduce mode.
+            for(k=1; k<64; k++){
+                s=huffDecode(compACTab ? &gHuffTab3 : &gHuffTab2, compACTab ? gHuffVal3 : gHuffVal2);
+                numExtraBits = s & 0xF;
+                if(numExtraBits) getBits2(numExtraBits);
+                r = s >> 4;
+                s &= 15;
+                if(s){
+                    if(r){
+                        if((k+r)>63) return PJPG_DECODE_ERROR;
+                        k=(uint8_t)(k + r);
+                    }
+                }
+                else{
+                    if(r==15){
+                        if((k+16)>64) return PJPG_DECODE_ERROR;
+                        k+=(16-1); // - 1 because the loop counter is k
+                    }
+                    else break;
+                }
+            }
+            transformBlockReduce(mcuBlock);
+        }
+        else{   // Decode and dequantize AC coefficients
+            for(k=1; k<64; k++){
+                uint16_t extraBits;
+                s=huffDecode(compACTab ? &gHuffTab3 : &gHuffTab2, compACTab ? gHuffVal3 : gHuffVal2);
+                extraBits = 0;
+                numExtraBits = s & 0xF;
+                if(numExtraBits) extraBits=getBits2(numExtraBits);
+                r=s>>4;
+                s&=15;
+                if(s){
+                    int16_t ac;
+                    if(r){
+                        if((k+r)>63) return PJPG_DECODE_ERROR;
+                        while(r){
+                            gCoeffBuf[ZAG[k++]] = 0;
+                            r--;
+                        }
+                    }
+                    ac=huffExtend(extraBits, s);
+                    gCoeffBuf[ZAG[k]] = ac * pQ[k];
+                }
+                else{
+                    if(r==15){
+                        if((k+16)>64) return PJPG_DECODE_ERROR;
+                        for(r=16; r>0; r--) gCoeffBuf[ZAG[k++]] = 0;
+                        k--; // - 1 because the loop counter is k
+                    }
+                    else break;
+                }
+            }
+            while(k<64) gCoeffBuf[ZAG[k++]] = 0;
+            transformBlock(mcuBlock);
+        }
+    }
+    return 0;
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::pjpeg_decode_mcu(){
+    uint8_t status;
+    if(gCallbackStatus) return gCallbackStatus;
+    if(!gNumMCUSRemaining) return PJPG_NO_MORE_BLOCKS;
+    status=decodeNextMCU();
+    if((status)||(gCallbackStatus)) return gCallbackStatus ? gCallbackStatus : status;
+    gNumMCUSRemaining--;
+    return 0;
+}
+//------------------------------------------------------------------------------
+uint8_t JPEGDecoder::pjpeg_decode_init(pjpeg_image_info_t* pInfo, pjpeg_need_bytes_callback_t pNeed_bytes_callback, void *pCallback_data, unsigned char reduce){
+    uint8_t status;
+    pInfo->m_width = 0; pInfo->m_height = 0; pInfo->m_comps = 0;
+    pInfo->m_MCUSPerRow = 0; pInfo->m_MCUSPerCol = 0;
+    pInfo->m_scanType = PJPG_GRAYSCALE;
+    pInfo->m_MCUWidth = 0; pInfo->m_MCUHeight = 0;
+    pInfo->m_pMCUBufR = (unsigned char*)0; pInfo->m_pMCUBufG = (unsigned char*)0; pInfo->m_pMCUBufB = (unsigned char*)0;
+    g_pNeedBytesCallback = pNeed_bytes_callback;
+    g_pCallback_data = pCallback_data;
+    gCallbackStatus = 0;
+    gReduce = reduce;
+    status = init();
+    if((status)||(gCallbackStatus)) return gCallbackStatus ? gCallbackStatus : status;
+    status = locateSOFMarker();
+    if((status)||(gCallbackStatus)) return gCallbackStatus ? gCallbackStatus : status;
+    status = initFrame();
+    if((status)||(gCallbackStatus)) return gCallbackStatus ? gCallbackStatus : status;
+    status = initScan();
+    if((status)||(gCallbackStatus)) return gCallbackStatus ? gCallbackStatus : status;
+    pInfo->m_width = gImageXSize; pInfo->m_height = gImageYSize; pInfo->m_comps = gCompsInFrame;
+    pInfo->m_scanType = gScanType;
+    pInfo->m_MCUSPerRow = gMaxMCUSPerRow; pInfo->m_MCUSPerCol = gMaxMCUSPerCol;
+    pInfo->m_MCUWidth = gMaxMCUXSize; pInfo->m_MCUHeight = gMaxMCUYSize;
+    pInfo->m_pMCUBufR = gMCUBufR; pInfo->m_pMCUBufG = gMCUBufG; pInfo->m_pMCUBufB = gMCUBufB;
+    return 0;
+}
 
 /*******************************************************************************/
 
-  // Code f√ºr Touchpad mit XPT2046
+  // Code f¸r Touchpad mit XPT2046
 TP::TP(uint8_t CS, uint8_t IRQ){
     TP_CS=CS;
     TP_IRQ=IRQ;
@@ -1378,12 +2547,12 @@ bool TP::read_TP(uint16_t& x, uint16_t& y){
   for(i=0; i<3; i++){
       x = TP_Send(0xD0);  //x
 
-      if((x<Xmin) || (x>Xmax)) return false;  //au√üerhalb des Displays
+      if((x<Xmin) || (x>Xmax)) return false;  //auﬂerhalb des Displays
        x=Xmax-x;
       _x[i]=x/xFaktor;
 
       y=  TP_Send(0x90); //y
-      if((y<Ymin) || (y>Ymax)) return false;  //au√üerhalb des Displays
+      if((y<Ymin) || (y>Ymax)) return false;  //auﬂerhalb des Displays
       y=Ymax-y;
      _y[i]=y/yFaktor;
 
@@ -1401,7 +2570,4 @@ bool TP::read_TP(uint16_t& x, uint16_t& y){
   log_i("TP Y=%i",y);
   return true;
 }
-
-
-
 
