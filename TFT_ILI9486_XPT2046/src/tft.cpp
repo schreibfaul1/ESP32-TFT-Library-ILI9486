@@ -76,14 +76,14 @@ uint16_t TFT::color565(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 TFT::TFT() {
-    _freq = 30000000;
+    _freq = 20000000;
     _height = TFT_HEIGHT;
     _width = TFT_WIDTH;
     _rotation=0;
 }
 
 void TFT::startWrite(void){
-    SPI.beginTransaction(SPISettings(_freq, MSBFIRST, SPI_MODE2));
+    SPI.beginTransaction(SPISettings(_freq, MSBFIRST, SPI_MODE0));
     TFT_CS_LOW();
 }
 
@@ -123,7 +123,7 @@ void TFT::begin(uint8_t CS, uint8_t DC, uint8_t MOSI, uint8_t MISO, uint8_t SCK)
     digitalWrite(TFT_CS, HIGH);
 
     pinMode(16, OUTPUT); digitalWrite(16, HIGH); //GPIO TP_CS
-    sprintf(sbuf, "TFT_CS:%i TFT_DC:%i TFT_BL:%i", TFT_CS, TFT_DC, TFT_BL);
+    sprintf(sbuf, "TFT_CS:%i TFT_DC:%i", TFT_CS, TFT_DC);
     sprintf(sbuf, "%s TFT_MOSI:%i TFT_MISO:%i TFT_SCK:%i\n", sbuf, TFT_MOSI, TFT_MISO, TFT_SCK);
     if(tft_info) tft_info(sbuf);
     SPI.begin(TFT_SCK, TFT_MISO, TFT_MOSI, -1);
@@ -773,21 +773,23 @@ size_t TFT::write(const uint8_t *buffer, size_t size){
     if(_f_utf8==true){
         size_t size_tmp=size;
         for(int i=0; i<size; i++) {
-            if(buffer[i]==0xC3) size_tmp--; // decrement size for all 0xC3
+        	if(buffer[i]==0xC2) size_tmp--; // decrement size for all 0xC2
+        	if(buffer[i]==0xC3) size_tmp--; // decrement size for all 0xC3
         }
         size=size_tmp;
-        writeText(UTF8toASCII(buffer), size);
+        writeText(UTF8toUNI(buffer), size);
     }
     else writeText(buffer, size);
     return 0;
 }
 
-const uint8_t*  TFT::UTF8toASCII(const uint8_t* str){
+const uint8_t*  TFT::UTF8toUNI(const uint8_t* str){
     uint16_t i=0, j=0;
     static uint8_t sbuf[255];
     while(str[i]!=0){
         sbuf[j]=str[i];
         if(sbuf[j]=='|') sbuf[j]='\n';
+        if(sbuf[j]==0xC2){i++;sbuf[j]=str[i];}
         if(sbuf[j]==0xC3){i++;sbuf[j]=str[i]+64;}
         if((str[i]=='%')&&(str[i+1]=='2')&&(str[i+2]=='0')){sbuf[j]=' '; i+=2;} //%20 in blank
         i++; j++;
@@ -2498,7 +2500,7 @@ uint8_t JPEGDecoder::pjpeg_decode_init(pjpeg_image_info_t* pInfo, pjpeg_need_byt
 
 /*******************************************************************************/
 
-  // Code für Touchpad mit XPT2046
+  // Code fï¿½r Touchpad mit XPT2046
 TP::TP(uint8_t CS, uint8_t IRQ){
     TP_CS=CS;
     TP_IRQ=IRQ;
@@ -2547,12 +2549,12 @@ bool TP::read_TP(uint16_t& x, uint16_t& y){
   for(i=0; i<3; i++){
       x = TP_Send(0xD0);  //x
 
-      if((x<Xmin) || (x>Xmax)) return false;  //außerhalb des Displays
+      if((x<Xmin) || (x>Xmax)) return false;  //auï¿½erhalb des Displays
        x=Xmax-x;
       _x[i]=x/xFaktor;
 
       y=  TP_Send(0x90); //y
-      if((y<Ymin) || (y>Ymax)) return false;  //außerhalb des Displays
+      if((y<Ymin) || (y>Ymax)) return false;  //auï¿½erhalb des Displays
       y=Ymax-y;
      _y[i]=y/yFaktor;
 

@@ -5,7 +5,14 @@
 #include "FS.h"
 #include "SPI.h"
 #include "SD.h"
-#include "fonts.h"
+
+#include "fonts/Baskerville_Old_Face.h"
+#include "fonts/Courier_New.h"
+#include "fonts/Garamond.h"
+#include "fonts/Monotype_Corsiva.h"
+#include "fonts/misc.h"
+#include "fonts/Old_English_Text_MT.h"
+#include "fonts/Script_MT_Bold.h"
 
 extern __attribute__((weak)) void tft_info(const char*);
 extern __attribute__((weak)) void tp_pressed(uint16_t x, uint16_t y);
@@ -85,7 +92,7 @@ class TFT : public Print {
 //      void      scrollTo(uint16_t y);
 
 virtual size_t    write(uint8_t);
-virtual size_t       write(const uint8_t *buffer, size_t size);
+virtual size_t    write(const uint8_t *buffer, size_t size);
 
         // Recommended Non-Transaction
         void      drawLine(int16_t Xpos0, int16_t Ypos0, int16_t Xpos1, int16_t Ypos1, uint16_t color);
@@ -136,7 +143,7 @@ virtual size_t       write(const uint8_t *buffer, size_t size);
         boolean   _f_curPos=false;
         uint8_t   TFT_DC  = 21;    /* Data or Command */
         uint8_t   TFT_CS  = 22;    /* SPI Chip select */
-        uint8_t   TFT_BL  = 17;    /* BackLight */
+        //uint8_t   TFT_BL  = 17;    /* BackLight */
         uint8_t   TFT_SCK = 18;
         uint8_t   TFT_MISO= 19;
         uint8_t   TFT_MOSI= 23;
@@ -150,7 +157,7 @@ virtual size_t       write(const uint8_t *buffer, size_t size);
         inline void _swap_int16_t(int16_t a, int16_t b) { int16_t t = a; a = b; b = t; }
         void        init();
         void        writeCommand(uint16_t cmd);
-        const uint8_t* UTF8toASCII(const uint8_t* str);
+        const uint8_t* UTF8toUNI(const uint8_t* str);
 
         // Transaction API not used by GFX
         void      setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
