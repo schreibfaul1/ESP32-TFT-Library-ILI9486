@@ -791,6 +791,8 @@ const uint8_t*  TFT::UTF8toUNI(const uint8_t* str){
         if(sbuf[j]=='|') sbuf[j]='\n';
         if(sbuf[j]==0xC2){i++;sbuf[j]=str[i];}
         if(sbuf[j]==0xC3){i++;sbuf[j]=str[i]+64;}
+        //if(sbuf[j]==0xD0){i++;sbuf[j]=str[i]+48;} //cyrillic
+        //if(sbuf[j]==0xD1){i++;sbuf[j]=str[i]+48+64;} //cyrillic
         if((str[i]=='%')&&(str[i+1]=='2')&&(str[i+2]=='0')){sbuf[j]=' '; i+=2;} //%20 in blank
         i++; j++;
     }
