@@ -13,6 +13,7 @@
 #include "fonts/misc.h"
 #include "fonts/Old_English_Text_MT.h"
 #include "fonts/Script_MT_Bold.h"
+#include "fonts/Garamond_cyrillic.h"
 
 extern __attribute__((weak)) void tft_info(const char*);
 extern __attribute__((weak)) void tp_pressed(uint16_t x, uint16_t y);
