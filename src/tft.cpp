@@ -2570,8 +2570,8 @@ bool TP::read_TP(uint16_t& x, uint16_t& y){
   if(_rotation==1){tmpxy=x; x=y;   y=TFT_WIDTH-tmpxy;  if(x>TFT_HEIGHT-1) x=0; if(y>TFT_WIDTH-1)y=0;}
   if(_rotation==2){x=TFT_WIDTH-x; y=TFT_HEIGHT-y; if(x>TFT_WIDTH-1) x=0; if(y>TFT_HEIGHT-1) y=0;}
   if(_rotation==3){tmpxy=y; y=x; x=TFT_HEIGHT-tmpxy; if(x>TFT_HEIGHT-1) x=0; if(y>TFT_WIDTH-1) y=0;}
-  log_i("TP X=%i",x);
-  log_i("TP Y=%i",y);
+//  log_i("TP X=%i",x);
+//  log_i("TP Y=%i",y);
   return true;
 }
 
