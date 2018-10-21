@@ -635,8 +635,11 @@ bool TFT::setCursor(uint16_t x, uint16_t y) {
 }
 /*******************************************************************************/
 
-size_t TFT::writeText(const uint8_t *str, uint16_t len)      // a pointer to string
+size_t TFT::writeText(const uint8_t *str)      // a pointer to string
 {
+    uint16_t len=0;
+    while(str[len]!=0)len++;  // determine length of text
+
     static int16_t xC=64;
     static int16_t tmp_curX=0;
     static int16_t tmp_curY=0;
@@ -689,7 +692,6 @@ size_t TFT::writeText(const uint8_t *str, uint16_t len)      // a pointer to str
                 //log_e("Char %c Len %i",str[a],fi);
                 a++;
                 if(str[a]=='\n')break;  // text defined word wrap recognised
-                if(str[a]== 0  )break;  // text end?
             }
 //            log_e("strw=%i", strw);
 //            log_e("xpos %i", (Xpos));
@@ -805,10 +807,10 @@ size_t TFT::write(uint8_t character) {
     return 0;
 }
 size_t TFT::write(const uint8_t *buffer, size_t size){
-    if(_f_cp1251){writeText(UTF8toCp1251(buffer), size); return 0;}
-    if(_f_cp1252){writeText(UTF8toCp1252(buffer), size); return 0;}
-    if(_f_cp1253){writeText(UTF8toCp1253(buffer), size); return 0;}
-    writeText(buffer, size); return 0;
+    if(_f_cp1251){writeText(UTF8toCp1251(buffer)); return 0;}
+    if(_f_cp1252){writeText(UTF8toCp1252(buffer)); return 0;}
+    if(_f_cp1253){writeText(UTF8toCp1253(buffer)); return 0;}
+    writeText(buffer); return 0;
 }
 const uint8_t* TFT::UTF8toCp1251(const uint8_t* str){  //cyrillic
     uint16_t i=0, j=0;

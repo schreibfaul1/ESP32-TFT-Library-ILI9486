@@ -12,7 +12,7 @@
 //#include "fonts/Courier_New.h"
 //#include "fonts/Monotype_Corsiva.h"
 //#include "fonts/misc.h"
-//#include "fonts/Old_English_Text_MT.h"
+#include "fonts/Old_English_Text_MT.h"
 //#include "fonts/Script_MT_Bold.h"
 //#include "fonts/Garamond_cyrillic.h"
 //#include "fonts/Garamond_greek.h"
@@ -115,7 +115,7 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
         boolean   drawBmpFile(fs::FS &fs, const char * path, uint16_t x=0, uint16_t y=0, uint16_t maxWidth=0, uint16_t maxHeight=0, uint16_t offX=0, uint16_t offY=0);
         boolean   drawJpgFile(fs::FS &fs, const char * path, uint16_t x=0, uint16_t y=0, uint16_t maxWidth=0, uint16_t maxHeight=0, uint16_t offX=0, uint16_t offY=0);
         uint16_t  color565(uint8_t r, uint8_t g, uint8_t b);
-        size_t    writeText(const uint8_t *str, uint16_t len);
+        size_t    writeText(const uint8_t *str);
 
         inline void setTextColor(uint16_t color){_textcolor=color;}
         inline void setFont(const uint16_t* font){_font=font;
