@@ -1,20 +1,31 @@
-
 #include "Arduino.h"
 #include "SPI.h"
 #include "tft.h"
 
-#define TFT_CS        22    // do not use GPI032 or GPIO33 here
-#define TFT_DC        21    // do not use GPI032 or GPIO33 here
+#define TFT_CS        22
+#define TFT_DC        21
 #define SPI_MOSI      23
 #define SPI_MISO      19
 #define SPI_SCK       18
-#define TP_IRQ        39
-#define TP_CS         16
 
 
 #define min(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 TFT tft;
+
+// function prototypes
+unsigned long testFillScreen();
+unsigned long testText();
+unsigned long testLines(uint16_t color);
+unsigned long testFastLines(uint16_t color1, uint16_t color2);
+unsigned long testRects(uint16_t color);
+unsigned long testFilledRects(uint16_t color1, uint16_t color2) ;
+unsigned long testCircles(uint8_t radius, uint16_t color);
+unsigned long testFilledCircles(uint8_t radius, uint16_t color);
+unsigned long testTriangles();
+unsigned long testFilledTriangles();
+unsigned long testRoundRects();
+unsigned long testFilledRoundRects();
 
 void setup() {
     Serial.begin(115200);
@@ -74,35 +85,17 @@ void setup() {
     delay(500);
 
     Serial.println(F("Done!"));
-
-
-
 }
-
-
-
-
-
-
 
 //-------------------------------------------------------------------------------------
 void loop(void) {
     for(uint8_t rotation=0; rotation<4; rotation++) {
         tft.setRotation(rotation);
         testText();
-
-      //tft.drawBmpFile(SD, "/tiger0.bmp", 0, 0);
-
         delay(3000);
-
     }
 }
 //-------------------------------------------------------------------------------------
-
-
-
-
-
 
 unsigned long testFillScreen() {
   unsigned long start = micros();
@@ -354,4 +347,3 @@ unsigned long testFilledRoundRects() {
 
   return micros() - start;
 }
-
