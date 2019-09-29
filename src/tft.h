@@ -12,11 +12,11 @@
 //#include "fonts/Courier_New.h"
 //#include "fonts/Monotype_Corsiva.h"
 //#include "fonts/misc.h"
-#include "fonts/Old_English_Text_MT.h"
+//#include "fonts/Old_English_Text_MT.h"
 //#include "fonts/Script_MT_Bold.h"
 //#include "fonts/Garamond_cyrillic.h"
 //#include "fonts/Garamond_greek.h"
-//#include "fonts/Times_New_Roman.h"      // latin, greek, cyrillic with all extensions
+#include "fonts/Times_New_Roman.h"      // latin, greek, cyrillic with all extensions
 
 extern __attribute__((weak)) void tft_info(const char*);
 extern __attribute__((weak)) void tp_pressed(uint16_t x, uint16_t y);
@@ -206,10 +206,14 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
         uint8_t   buf[1024];
 
         inline int minimum(int a, int b){if(a < b) return a; else return b;}
-        inline void TFT_DC_HIGH() {GPIO.out_w1ts = (1 << TFT_DC);}
-        inline void TFT_DC_LOW()  {GPIO.out_w1tc = (1 << TFT_DC);}
-        inline void TFT_CS_HIGH() {GPIO.out_w1ts = (1 << TFT_CS);}
-        inline void TFT_CS_LOW()  {GPIO.out_w1tc = (1 << TFT_CS);}
+    	inline void TFT_DC_HIGH() {if (TFT_DC < 32) {GPIO.out_w1ts = (1 << TFT_DC);}
+    	                           else             {GPIO.out1_w1ts.data = (1 << (TFT_DC - 32));}}
+    	inline void TFT_DC_LOW()  {if (TFT_DC < 32) {GPIO.out_w1tc = (1 << TFT_DC);}
+    	                           else             {GPIO.out1_w1tc.data = (1 << (TFT_DC - 32));}}
+    	inline void TFT_CS_HIGH() {if (TFT_CS < 32) {GPIO.out_w1ts = (1 << TFT_CS);}
+    	                           else             {GPIO.out1_w1ts.data = (1 << (TFT_CS - 32));}}
+    	inline void TFT_CS_LOW()  {if (TFT_CS < 32) {GPIO.out_w1tc = (1 << TFT_CS);}
+    	                           else             {GPIO.out1_w1tc.data = (1 << (TFT_CS - 32));}}
         inline void _swap_int16_t(int16_t a, int16_t b) { int16_t t = a; a = b; b = t; }
         void        init();
         void        writeCommand(uint16_t cmd);
