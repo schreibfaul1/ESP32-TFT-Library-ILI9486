@@ -7,6 +7,7 @@
 #######################################
 
 TFT	KEYWORD1
+TP  KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
@@ -36,6 +37,11 @@ color565	KEYWORD2
 writeText	KEYWORD2
 setTextColor	KEYWORD2
 setFont	KEYWORD2
+setTextSize KEYWORD2
+setTextOrientation  KEYWORD2
+height  KEYWORD2
+width KEYWORD2
+getRotation KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
