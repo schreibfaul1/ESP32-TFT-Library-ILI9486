@@ -33,3 +33,20 @@ Triangles (filled)       369945
 Rounded rects (outline)  104712
 Rounded rects (filled)   1070470
 
+--------------------------------------------
+
+MHS-3.5inch Display 80MHz
+
+Benchmark                Time (microseconds)
+Screen fill              240469
+Text                     74525
+Lines                    431731
+Horiz/Vert Lines         159632
+Rectangles (outline)     52956
+Rectangles (filled)      619145
+Circles (filled)         383955
+Circles (outline)        424709
+Triangles (outline)      140530
+Triangles (filled)       265034
+Rounded rects (outline)  122529
+Rounded rects (filled)   695859
