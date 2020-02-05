@@ -444,8 +444,8 @@ void TFT::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 
     // For lower part of triangle, find scanline crossings for segments
     // 0-2 and 1-2.  This loop is skipped if y1=y2.
-    sa = dx12 * (y - y1);
-    sb = dx02 * (y - y0);
+    sa = (int32_t)dx12 * (y - y1);
+    sb = (int32_t)dx02 * (y - y0);
     for (; y <= y2; y++) {
         a = x1 + sa / dy12;
         b = x0 + sb / dy02;
@@ -2604,7 +2604,7 @@ uint8_t JPEGDecoder::pjpeg_decode_init(pjpeg_image_info_t* pInfo, pjpeg_need_byt
 
 /*******************************************************************************/
 
-  // Code f�r Touchpad mit XPT2046
+  // Code für Touchpad mit XPT2046
 TP::TP(uint8_t CS, uint8_t IRQ){
     TP_CS=CS;
     TP_IRQ=IRQ;

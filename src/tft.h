@@ -214,7 +214,7 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
     	                           else             {GPIO.out1_w1ts.data = (1 << (TFT_CS - 32));}}
     	inline void TFT_CS_LOW()  {if (TFT_CS < 32) {GPIO.out_w1tc = (1 << TFT_CS);}
     	                           else             {GPIO.out1_w1tc.data = (1 << (TFT_CS - 32));}}
-        inline void _swap_int16_t(int16_t a, int16_t b) { int16_t t = a; a = b; b = t; }
+        inline void _swap_int16_t(int16_t &a, int16_t &b) { int16_t t = a; a = b; b = t; }
         void        init();
         void        writeCommand(uint16_t cmd);
         const uint8_t* UTF8toCp1251(const uint8_t* str);
