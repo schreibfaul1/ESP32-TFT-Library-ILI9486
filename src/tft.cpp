@@ -463,11 +463,12 @@ void TFT::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 }
 void TFT::drawRect(int16_t Xpos, int16_t Ypos, uint16_t Width, uint16_t Height,    uint16_t Color)
 {
+    if(Width<1 || Height<1) return;
     startWrite();
     writeFastHLine(Xpos, Ypos, Width, Color);
-    writeFastHLine(Xpos, Ypos + Height, Width, Color);
+    writeFastHLine(Xpos, Ypos + Height-1, Width, Color);
     writeFastVLine(Xpos, Ypos, Height, Color);
-    writeFastVLine(Xpos + Width, Ypos, Height + 1, Color);
+    writeFastVLine(Xpos + Width-1, Ypos, Height, Color);
     endWrite();
 }
 
