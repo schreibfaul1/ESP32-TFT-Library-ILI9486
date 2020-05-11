@@ -91,6 +91,7 @@ class TFT : public Print {
         void      begin(uint8_t CS=22, uint8_t DC=21, uint8_t MOSI=23, uint8_t MISO=19, uint8_t SCK=18);
 
         void      setRotation(uint8_t r);
+        void      setFrequency(uint32_t f);
         bool      setCursor(uint16_t x, uint16_t y);
         void      invertDisplay(boolean i);
 //      void      scrollTo(uint16_t y);

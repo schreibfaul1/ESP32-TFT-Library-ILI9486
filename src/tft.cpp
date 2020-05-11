@@ -82,6 +82,11 @@ TFT::TFT() {
     _rotation=0;
 }
 
+void TFT::setFrequency(uint32_t f){
+    if(f>80000000) f=80000000;
+    _freq=f;  // overwrite default
+}
+
 void TFT::startWrite(void){
     SPI.beginTransaction(SPISettings(_freq, MSBFIRST, SPI_MODE0));
     TFT_CS_LOW();
@@ -2654,12 +2659,12 @@ bool TP::read_TP(uint16_t& x, uint16_t& y){
   for(i=0; i<3; i++){
       x = TP_Send(0xD0);  //x
 
-      if((x<Xmin) || (x>Xmax)) return false;  //au�erhalb des Displays
+      if((x<Xmin) || (x>Xmax)) return false;  //außerhalb des Displays
        x=Xmax-x;
       _x[i]=x/xFaktor;
 
       y=  TP_Send(0x90); //y
-      if((y<Ymin) || (y>Ymax)) return false;  //au�erhalb des Displays
+      if((y<Ymin) || (y>Ymax)) return false;  //außerhalb des Displays
       y=Ymax-y;
      _y[i]=y/yFaktor;
 
