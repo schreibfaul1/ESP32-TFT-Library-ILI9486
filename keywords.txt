@@ -15,6 +15,7 @@ TP  KEYWORD1
 
 begin	KEYWORD2
 setRotation	KEYWORD2
+setFrequency	KEYWORD2
 setCursor	KEYWORD2
 invertDisplay	KEYWORD2
 write	KEYWORD2
