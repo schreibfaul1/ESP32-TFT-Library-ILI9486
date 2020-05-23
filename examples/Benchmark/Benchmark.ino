@@ -2,11 +2,14 @@
 #include "SPI.h"
 #include "tft.h"
 
+
 #define TFT_CS        22
 #define TFT_DC        21
+#define TP_CS          5    // if exists connect CS_Touchpad
 #define SPI_MOSI      23
 #define SPI_MISO      19
 #define SPI_SCK       18
+
 
 
 #define min(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -28,9 +31,12 @@ unsigned long testRoundRects();
 unsigned long testFilledRoundRects();
 
 void setup() {
+    pinMode(TP_CS, OUTPUT);
+    digitalWrite(TP_CS, HIGH); // set Touchpad inactive
     Serial.begin(115200);
     SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
     tft.begin(TFT_CS, TFT_DC, SPI_MOSI, SPI_MISO, SPI_SCK);
+    tft.setFrequency(20000000); //20000000, 27000000, 40000000, 80000000
     tft.setRotation(1);
     tft.fillScreen(TFT_BLACK);
 
@@ -110,7 +116,7 @@ unsigned long testFillScreen() {
 unsigned long testText() {
   tft.fillScreen(TFT_BLACK);
   unsigned long start = micros();
-  tft.setCursor(0, 0);
+  tft.setCursor(10, 10);
   tft.setTextColor(TFT_WHITE);  tft.setTextSize(1);
   tft.println("Hello World!");
   tft.setTextColor(TFT_YELLOW); tft.setTextSize(2);
@@ -121,16 +127,11 @@ unsigned long testText() {
   tft.setTextColor(TFT_GREEN);
   tft.setTextSize(6);
   tft.println("Groop");
-  tft.setTextSize(2);
-  tft.println("I implore thee,");
-  tft.setTextSize(1);
-  tft.println("my foonting turlingdromes.");
-  tft.println("And hooptiously drangle me");
-  tft.println("with crinkly bindlewurdles,");
-  tft.println("Or I will rend thee");
-  tft.println("in the gobberwarts");
-  tft.println("with my blurglecruncheon,");
-  tft.println("see if I don't!");
+  tft.setTextSize(3);
+  tft.print("Oh freddled gruntbuggly thy micturations are to me ");
+  tft.print("As plurdled gabbleblotchits on a lurgid bee. Groop I implore thee, ");
+  tft.print("my foonting turlingdromes. And hooptiously drangle me with crinkly bindlewurdles, ");
+  tft.print("Or I will rend thee in the gobberwarts with my blurglecruncheon, see if I dont!");
   return micros() - start;
 }
 
