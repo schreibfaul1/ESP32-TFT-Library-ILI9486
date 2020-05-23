@@ -629,20 +629,28 @@ void TFT::fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername
         }
     }
 }
+/*******************************************************************************/
 bool TFT::setCursor(uint16_t x, uint16_t y) {
-    if (x >= width()|| y >= height()) return false;
-      writeCommand(0x2A); SPI.write(x >> 8);
-       SPI.write(x & 0xFF); writeCommand(ILI9486_RAMWR); //Column Start
-    writeCommand(0x2B); SPI.write(y >> 8);
-    SPI.write(y & 0xFF); writeCommand(ILI9486_RAMWR); //Row Start
-    _curX=x; _curY=y;
+
+    if (x >= width()|| y >= height()) {
+        return false;
+    }
+    writeCommand(0x2A);
+    SPI.write(x >> 8);
+    SPI.write(x & 0xFF);
+    writeCommand(ILI9486_RAMWR); //Column Start
+    writeCommand(0x2B);
+    SPI.write(y >> 8);
+    SPI.write(y & 0xFF);
+    writeCommand(ILI9486_RAMWR); //Row Start
+    _curX=x;
+    _curY=y;
     _f_curPos=true;  //curPos is updated
     return true;
 }
 /*******************************************************************************/
+size_t TFT::writeText(const uint8_t *str) {    // a pointer to string
 
-size_t TFT::writeText(const uint8_t *str)      // a pointer to string
-{
     uint16_t len=0;
     while(str[len]!=0)len++;  // determine length of text
 
@@ -651,122 +659,112 @@ size_t TFT::writeText(const uint8_t *str)      // a pointer to string
     static int16_t tmp_curY=0;
 
     if(_f_curPos==true){tmp_curX=_curX; tmp_curY=_curY; _f_curPos=false;} //new CursorValues?
+
+    boolean  f_wrap=false;
     uint16_t color=_textcolor;
     int16_t  Xpos=tmp_curX;
     int16_t  Ypos=tmp_curY;
     int16_t  Ypos0 = Ypos;
     int16_t  Xpos0 = Xpos;
-    boolean  f_wrap=false;
     uint16_t font_char=0;
-    int16_t  i, m, n;
-    uint16_t font_height, char_width,  chTemp, char_bytes, j, k, space;
-    uint32_t font_offset;
-    uint16_t font_index;
-    int a=0;
-    uint16_t fi;
-    int strw=0;
-    font_height = _font[6];
-    i = 0; j=0;
+    int16_t  i=0;
+    uint16_t j=0;
+    int      a=0;
+    uint16_t font_height = _font[6];
     startWrite();
-    while(i != len) //until string ends
-    {
 
-        //------------------------------------------------------------------
-        // word wrap
+    while(i != len) {  //until string ends
+        int strw=0;
+        //------------------------------------------------------------------  word wrap
         a=i+1 ;
-        if(str[i] == 32){ // space
-            //log_e("str %s",&str[i]);
+        if(str[i] == 32) { // space
             strw=font_height/4; // erstes Leerzeichen
-            fi=8;
+            uint16_t fi=8;
             fi=fi + (str[i] - 32) * 4;
             strw=strw + _font[fi] +1;
-            while((str[a] != 32) && (a < len)){
+            while((str[a] != 32) && (a < len)) {
                 fi=8;
                 if((_f_utf8)&&(str[a]>=0xC2)){ //next char is UTF-8
                     uint16_t ch=str[a]; ch<<=8; ch+=str[a+1];
                         if((ch<0xD4B0)) { // char is in range, is not a armenian char or higher
                             xC=(str[a]-0xC2)*64;  a++; fi+=(str[a]+xC-32)*4; // UTF-8 decoding
                         }
-                        else{
+                        else {
                             fi+=(str[a] - 32) * 4;
                         }
                 }
-                else{
+                else {
                     fi+=(str[a] - 32) * 4;
                 }
                 strw=strw + _font[fi] +1;
-                //log_e("Char %c Len %i",str[a],fi);
                 a++;
-                if(str[a]=='\n')break;  // text defined word wrap recognised
+                if(str[a]=='\n') break;  // text defined word wrap recognised
             }
-//            log_e("strw=%i", strw);
-//            log_e("xpos %i", (Xpos));
-            if(_textorientation==0){
-                if((Xpos + strw) >= width())f_wrap=true;
+            if(_textorientation == 0) {
+                if((Xpos + strw) >= width()) f_wrap = true;
             }
             else{
-                if((Ypos+strw)>=height()) f_wrap=true;
+                if((Ypos+strw) >= height()) f_wrap=true;
             }
         }
-        //------------------------------------------------------------------
-
+        //------------------------------------------------------------------ word wrap end
 
         font_char = str[i];     //die ersten 32 ASCII-Zeichen sind nicht im Zeichensatz enthalten
-        if((str[i]==32) && (f_wrap==true)){font_char='\n'; f_wrap=false;}
+        if((str[i]==32) && (f_wrap==true)) { font_char='\n'; f_wrap=false; }
         if(font_char>=32)       // it is a printable char
         {
-            if(_f_utf8){
-                if((font_char>=0xC2)&&(font_char<0xd5)){
+            if(_f_utf8) {
+                if((font_char>=0xC2)&&(font_char<0xd5)) {
                     if((font_char==0xd4)&&(str[i+1]>0xAF)) {} // do nothing, it is a armenian character or higher
-                    else{
+                    else {
                         xC=(font_char-0xC2)*64;  i++; font_char = str[i]+xC; // UTF-8 decoding
                     }
-
                 }
-                if((font_char==0xE2)&&(str[i+1]==0x80)){ // general punctuation, three bytes
+                if((font_char==0xE2)&&(str[i+1]==0x80)) { // general punctuation, three bytes
                     i+=2;
                     font_char=32; // set blank
                 }
             }
             font_char-=32;
-            font_index = 8; // begins at position 8 ever
+            uint16_t font_index = 8; // begins at position 8 ever
             font_index = font_index + font_char * 4;
-            char_width = _font[font_index];
+            uint16_t char_width = _font[font_index];
+            uint16_t space;
             if(font_char==0) space=font_height/4; else space=0; //correct spacewidth is 1
-            if(_textorientation==0){
-                if((Xpos+char_width+space)>=width()){Xpos=tmp_curX; Ypos+=font_height; Xpos0=Xpos; Ypos0=Ypos;}
+            if(_textorientation==0) {
+                if((Xpos+char_width+space)>=width()){Xpos=_curX; Ypos+=font_height; Xpos0=Xpos; Ypos0=Ypos;}
                 if((Ypos+font_height)>=height()){tmp_curX=Xpos; tmp_curY=Ypos; endWrite(); return i;}
             }
             else {
-                if((Ypos+char_width+space)>=height()){Ypos=tmp_curY; Xpos-=font_height; Xpos0=Xpos; Ypos0=Ypos;}
+                if((Ypos+char_width+space)>=height()){Ypos=_curY; Xpos-=font_height; Xpos0=Xpos; Ypos0=Ypos;}
                 if((Xpos-font_height)<0){tmp_curX=Xpos; tmp_curY=Ypos; endWrite(); return i;}
             }
-            char_bytes = (char_width - 1) / 8 + 1; //number of bytes for a character
+            uint16_t char_bytes = (char_width - 1) / 8 + 1; //number of bytes for a character
+            uint32_t font_offset;
             font_offset = _font[font_index + 3]; //MSB
             font_offset <<= 8; // shift left 8 times
             font_offset += _font[font_index + 2];
             font_offset <<= 8;
             font_offset += _font[font_index + 1]; //LSB
             //ab font_offset stehen die Infos für das Zeichen
-            n = 0;
-            for (k = 0; k < font_height; k++) {
-                for (m = 0; m < char_bytes; m++) {
-                    chTemp = (_font[font_offset + n]);
+            int16_t n = 0;
+            for (uint16_t k = 0; k < font_height; k++) {
+                for (int16_t m = 0; m < char_bytes; m++) {
+                    uint16_t chTemp = (_font[font_offset + n]);
                     n++;
                     if (_textorientation == 0) {
-
                         for (j = 0; j < 8; j++) {
-                            if (chTemp & 0x01)
+                            if (chTemp & 0x01) {
                                 writePixel(Xpos, Ypos, color);
+                            }
                             chTemp >>= 1;
-
                             Xpos++;
-
                             if ((Xpos - Xpos0) == char_width) {
                                 Xpos = Xpos0; Ypos++; break;
                             }
                         }
-                    } else {
+                    }
+                    else {
                         for (j = 0; j < 8; j++) {
                             if (chTemp & 0x01) writePixel(Xpos, Ypos, color);
                             chTemp >>= 1;
@@ -781,12 +779,12 @@ size_t TFT::writeText(const uint8_t *str)      // a pointer to string
             }
             if (_textorientation == 0) {
                 Ypos = Ypos0; Xpos0 = Xpos0 + char_width + 1 + space; Xpos = Xpos0;
-            } else {
+            }
+            else {
                 Xpos = Xpos0; Ypos0 = Ypos0 + char_width + 1 + space; Ypos = Ypos0;
             }
         } // end if(font_char>=0)
-        else  // das ist ein Steuerzeichen
-        {
+        else {  // das ist ein Steuerzeichen
             //if(str[i]==10) {  //CRLF
             if(font_char==10){
                 if(_textorientation==0){
@@ -807,7 +805,7 @@ size_t TFT::writeText(const uint8_t *str)      // a pointer to string
     endWrite();
     return i;
 }
-
+/*******************************************************************************/
 size_t TFT::write(uint8_t character) {
     /*Code to display letter when given the ASCII code for it*/
     return 0;
@@ -818,6 +816,7 @@ size_t TFT::write(const uint8_t *buffer, size_t size){
     if(_f_cp1253){writeText(UTF8toCp1253(buffer)); return 0;}
     writeText(buffer); return 0;
 }
+/*******************************************************************************/
 const uint8_t* TFT::UTF8toCp1251(const uint8_t* str){  //cyrillic
     uint16_t i=0, j=0;
     boolean k=false;
@@ -906,8 +905,6 @@ const uint8_t* TFT::UTF8toCp1253(const uint8_t* str){  //Greek
     buf[j]=0;
     return (buf);
 }
-
-
 /*******************************************************************************************************************
                                             B I T M A P S
 *******************************************************************************************************************/
