@@ -2612,6 +2612,7 @@ TP::TP(uint8_t CS, uint8_t IRQ){
     TP_CS=CS;
     TP_IRQ=IRQ;
     pinMode(TP_CS, OUTPUT);
+    digitalWrite(TP_CS, HIGH); // prevent blockage of the SPI bus
     pinMode(TP_IRQ, INPUT);
     TP_SPI=SPISettings(100000, MSBFIRST, SPI_MODE0); //slower speed
     xFaktor=float(Xmax-Xmin)/TFT_WIDTH;
