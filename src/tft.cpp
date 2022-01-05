@@ -1,3 +1,13 @@
+/*
+ *  tft.cpp
+ *
+ *  Created on: May 28,2018
+ *  Updated on: Jan 05,2022
+ *      Author: Wolle (schreibfaul1)
+ *
+ */
+
+
 
 #include "Arduino.h"
 #include "tft.h"
@@ -1464,6 +1474,10 @@ uint16_t JPEGDecoder::getExtendTest(uint8_t i){
 }
 //------------------------------------------------------------------------------
 int16_t JPEGDecoder::getExtendOffset(uint8_t i){
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshift-negative-value"
+
    switch (i){
       case 0: return 0;
       case 1: return ((-1)<<1) + 1;
@@ -1483,6 +1497,9 @@ int16_t JPEGDecoder::getExtendOffset(uint8_t i){
       case 15: return ((-1)<<15) + 1;
       default: return 0;
    }
+
+#pragma GCC diagnostic pop
+
 }
 //------------------------------------------------------------------------------
 

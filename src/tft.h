@@ -1,3 +1,12 @@
+/*
+ *  tft.h
+ *
+ *  Created on: May 28,2018
+ *  Updated on: Jan 05,2022
+ *      Author: Wolle (schreibfaul1)
+ *
+ */
+
 
 #pragma once
 
@@ -492,11 +501,13 @@ private:
     }
     inline int16_t arithmeticRightShiftN16(int16_t x, int8_t n){
         int16_t r = (uint16_t)x >> (uint8_t)n;
-        if (x < 0) r |= replicateSignBit16(n); return r;
+        if (x < 0) r |= replicateSignBit16(n);
+        return r;
     }
      inline int32_t arithmeticRightShift8L(long x){
         int32_t r = (unsigned long)x >> 8U;
-        if (x < 0) r |= ~(~(unsigned long)0U >> 8U); return r;
+        if (x < 0) r |= ~(~(unsigned long)0U >> 8U);
+        return r;
      }
      inline uint8_t getOctet(uint8_t FFCheck){
         uint8_t c = getChar();
