@@ -2,7 +2,7 @@
  *  tft.h
  *
  *  Created on: May 28,2018
- *  Updated on: Jan 05,2022
+ *  Updated on: Jan 08,2022
  *      Author: Wolle (schreibfaul1)
  *
  */
@@ -135,7 +135,10 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
                                                    (_font==Times_New_Roman27x21)||
                                                    (_font==Times_New_Roman34x27)||
                                                    (_font==Times_New_Roman38x31)||
-                                                   (_font==Times_New_Roman43x35)){
+                                                   (_font==Times_New_Roman43x35)||
+                                                   (_font==Times_New_Roman56x46)||
+                                                   (_font==Times_New_Roman66x53)){
+
                                                     _f_utf8=true; _f_cp1251=false; _f_cp1252=false; _f_cp1253=false;// font can handle UTF-8
                                                 }
                                                 else _f_utf8=false;
