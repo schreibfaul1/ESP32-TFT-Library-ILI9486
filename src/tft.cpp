@@ -659,7 +659,13 @@ bool TFT::setCursor(uint16_t x, uint16_t y) {
     return true;
 }
 /*******************************************************************************/
-size_t TFT::writeText(const uint8_t *str) {    // a pointer to string
+size_t TFT::writeText(const uint8_t *str, int16_t maxHeight) {    // a pointer to string
+
+    int16_t sHeight = height();
+    int16_t sWidth =  width();
+    if(maxHeight > 0){
+        sHeight = maxHeight;
+    }  
 
     uint16_t len=0;
     while(str[len]!=0)len++;  // determine length of text
@@ -711,10 +717,10 @@ size_t TFT::writeText(const uint8_t *str) {    // a pointer to string
                 if(str[a]=='\n') break;  // text defined word wrap recognised
             }
             if(_textorientation == 0) {
-                if((Xpos + strw) >= width()) f_wrap = true;
+                if((Xpos + strw) >= sWidth) f_wrap = true;
             }
             else{
-                if((Ypos+strw) >= height()) f_wrap=true;
+                if((Ypos+strw) >= sHeight) f_wrap=true;
             }
         }
         //------------------------------------------------------------------ word wrap end
@@ -742,11 +748,11 @@ size_t TFT::writeText(const uint8_t *str) {    // a pointer to string
             uint16_t space;
             if(font_char==0) space=font_height/4; else space=0; //correct spacewidth is 1
             if(_textorientation==0) {
-                if((Xpos+char_width+space)>=width()){Xpos=_curX; Ypos+=font_height; Xpos0=Xpos; Ypos0=Ypos;}
-                if((Ypos+font_height)>=height()){tmp_curX=Xpos; tmp_curY=Ypos; endWrite(); return i;}
+                if((Xpos+char_width+space)>=sWidth){Xpos=_curX; Ypos+=font_height; Xpos0=Xpos; Ypos0=Ypos;}
+                if((Ypos+font_height)>=sHeight){tmp_curX=Xpos; tmp_curY=Ypos; endWrite(); return i;}
             }
             else {
-                if((Ypos+char_width+space)>=height()){Ypos=_curY; Xpos-=font_height; Xpos0=Xpos; Ypos0=Ypos;}
+                if((Ypos+char_width+space)>sHeight){Ypos=_curY; Xpos-=font_height; Xpos0=Xpos; Ypos0=Ypos;}
                 if((Xpos-font_height)<0){tmp_curX=Xpos; tmp_curY=Ypos; endWrite(); return i;}
             }
             uint16_t char_bytes = (char_width - 1) / 8 + 1; //number of bytes for a character
@@ -799,11 +805,11 @@ size_t TFT::writeText(const uint8_t *str) {    // a pointer to string
             if(font_char==10){
                 if(_textorientation==0){
                     {Xpos=_curX; Ypos+=font_height; Xpos0=Xpos; Ypos0=Ypos;}
-                    if((Ypos+font_height)>height()){tmp_curX=Xpos; tmp_curY=Ypos; endWrite(); return i;}
+                    if((Ypos+font_height)>sHeight){tmp_curX=Xpos; tmp_curY=Ypos; endWrite(); return i;}
                 }
                 else{
                     {Ypos=_curY; Xpos-=font_height; Xpos0=Xpos; Ypos0=Ypos;}
-                    if((Ypos+font_height)>height()){tmp_curX=Xpos; tmp_curY=Ypos; endWrite(); return i;}
+                    if((Ypos+font_height)>sHeight){tmp_curX=Xpos; tmp_curY=Ypos; endWrite(); return i;}
                 }
             }
         }

@@ -16,11 +16,11 @@
 #include "SD.h"
 
 //exclude all not needed fonts (because c++ indexer will be slow)
-#include "fonts/Garamond.h"  // default, do not comment this line
+//#include "fonts/Garamond.h"  // default, do not comment this line
 //#include "fonts/Baskerville_Old_Face.h"
 //#include "fonts/Courier_New.h"
 //#include "fonts/Monotype_Corsiva.h"
-//#include "fonts/misc.h"
+#include "fonts/misc.h"
 //#include "fonts/Old_English_Text_MT.h"
 //#include "fonts/Script_MT_Bold.h"
 //#include "fonts/Garamond_cyrillic.h"
@@ -125,11 +125,11 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
         boolean   drawBmpFile(fs::FS &fs, const char * path, uint16_t x=0, uint16_t y=0, uint16_t maxWidth=0, uint16_t maxHeight=0, uint16_t offX=0, uint16_t offY=0);
         boolean   drawJpgFile(fs::FS &fs, const char * path, uint16_t x=0, uint16_t y=0, uint16_t maxWidth=0, uint16_t maxHeight=0, uint16_t offX=0, uint16_t offY=0);
         uint16_t  color565(uint8_t r, uint8_t g, uint8_t b);
-        size_t    writeText(const uint8_t *str);
+        size_t    writeText(const uint8_t *str, int16_t maxHeight = -1);
 
         inline void setTextColor(uint16_t color){_textcolor=color;}
         inline void setFont(const uint16_t* font){_font=font;
-            #ifdef TIMES_NEW_ROMAN_H_
+        #ifdef TIMES_NEW_ROMAN_H_
                                                 if((_font==Times_New_Roman15x14)||
                                                    (_font==Times_New_Roman21x17)||
                                                    (_font==Times_New_Roman27x21)||
@@ -181,13 +181,27 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
             #endif //GARAMOND_GREEK_H_
 
         }
-        inline void setTextSize(uint8_t size){if(size==1) _font=Garamond15x18;
-                                              if(size==2) _font=Garamond17x21;
-                                              if(size==3) _font=Garamond19x24;
-                                              if(size==4) _font=Garamond27x33;
-                                              if(size==5) _font=Garamond34x42;
-                                              if(size==6) _font=Garamond44x54;
-                                              if(size==7) _font=Garamond88x108;}
+        inline void setTextSize(uint8_t size){
+            #ifdef TIMES_NEW_ROMAN_H_
+                if(size==1) _font=Times_New_Roman15x14;
+                if(size==2) _font=Times_New_Roman21x17;
+                if(size==3) _font=Times_New_Roman27x21;
+                if(size==4) _font=Times_New_Roman34x27;
+                if(size==5) _font=Times_New_Roman38x31;
+                if(size==6) _font=Times_New_Roman43x35;
+                if(size==7) _font=Times_New_Roman56x46;
+                if(size==8) _font=Times_New_Roman66x53;
+            #else
+                if(size==1) _font=Garamond15x18;
+                if(size==2) _font=Garamond17x21;
+                if(size==3) _font=Garamond19x24;
+                if(size==4) _font=Garamond27x33;
+                if(size==5) _font=Garamond34x42;
+                if(size==6) _font=Garamond44x54;
+                if(size==7) _font=Garamond88x108;
+            #endif
+        }
+
         inline void setTextOrientation(uint8_t orientation=0){_textorientation=orientation;} //0 h other v
 //      inline void setUTF8decoder(boolean UTF8){if(UTF8==true) _f_utf8=true; else _f_utf8=false;} // obsolete, will be set automatically
         int16_t height(void) const;
@@ -208,7 +222,7 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
         boolean   _f_cp1251=false;
         boolean   _f_cp1252=false;
         boolean   _f_cp1253=false;
-        const uint16_t * _font=Garamond15x18;
+        const uint16_t * _font = Times_New_Roman15x14;
         boolean   _f_curPos=false;
         uint8_t   TFT_DC  = 21;    /* Data or Command */
         uint8_t   TFT_CS  = 22;    /* SPI Chip select */
