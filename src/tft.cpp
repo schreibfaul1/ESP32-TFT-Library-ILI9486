@@ -2,7 +2,7 @@
  *  tft.cpp
  *
  *  Created on: May 28,2018
- *  Updated on: Jan 05,2022
+ *  Updated on: Jan 22,2022
  *      Author: Wolle (schreibfaul1)
  *
  */
@@ -1087,18 +1087,26 @@ boolean TFT::drawJpgFile(fs::FS &fs, const char * path, uint16_t x, uint16_t y, 
 //    log_i("MCU / row: %i, MCU / col: %i", JpegDec.MCUSPerRow, JpegDec.MCUSPerCol);
 //    log_i("MCU width: %i, MCU height: %i", JpegDec.MCUWidth, JpegDec.MCUHeight);
 
-    renderJPEG(x, y);
+    renderJPEG(x, y, maxWidth, maxHeight);
 
     return true;
 }
 
-void TFT::renderJPEG(int xpos, int ypos) {
+void TFT::renderJPEG(int xpos, int ypos, uint16_t maxWidth, uint16_t maxHeight) {
     // retrieve infomration about the image
     uint16_t *pImg;
     uint16_t mcu_w = JpegDec.MCUWidth;
     uint16_t mcu_h = JpegDec.MCUHeight;
     uint32_t max_x = JpegDec.width;
     uint32_t max_y = JpegDec.height;
+
+    maxWidth  = (uint)(maxWidth  / 16) * 16;  // must be a multiple of 16 (MCU blocksize)
+    log_i("maxWidth %d", maxWidth );
+    maxHeight = (uint)(maxHeight / 16) * 16;   // must be a multiple of 8
+
+    if(maxWidth  > 0 && maxWidth  < max_x) max_x = maxWidth;  // overwrite
+    if(maxHeight > 0 && maxHeight < max_y) max_y = maxHeight; // overwrite
+
 
     // Jpeg images are draw as a set of image block (tiles) called Minimum Coding Units (MCUs)
     // Typically these MCUs are 16x16 pixel blocks
@@ -1159,7 +1167,7 @@ void TFT::renderJPEG(int xpos, int ypos) {
     drawTime = millis() - drawTime; // Calculate the time it took
 
     // print the results to the serial port
-    log_i("Total render time was: %ims",drawTime);
+    // log_i("Total render time was: %ims",drawTime);
     endJpeg();
 }
 

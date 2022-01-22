@@ -2,7 +2,7 @@
  *  tft.h
  *
  *  Created on: May 28,2018
- *  Updated on: Jan 08,2022
+ *  Updated on: Jan 22,2022
  *      Author: Wolle (schreibfaul1)
  *
  */
@@ -276,7 +276,7 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
         void      bmpSkipPixels(fs::File &file, uint8_t bitsPerPixel, size_t len);
         void      bmpAddPixels(fs::File &file, uint8_t bitsPerPixel, size_t len);
         void      drawBitmap(int16_t x, int16_t y, int16_t w, int16_t h, const uint16_t *pcolors);
-        void      renderJPEG(int xpos, int ypos);
+        void      renderJPEG(int xpos, int ypos, uint16_t maxWidth, uint16_t maxHeight);
 };
 
 //-----------------------------------------------------------------------------------------------------------------------
