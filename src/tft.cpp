@@ -1101,7 +1101,7 @@ void TFT::renderJPEG(int xpos, int ypos, uint16_t maxWidth, uint16_t maxHeight) 
     uint32_t max_y = JpegDec.height;
 
     maxWidth  = (uint)(maxWidth  / 16) * 16;  // must be a multiple of 16 (MCU blocksize)
-    log_i("maxWidth %d", maxWidth );
+    //log_i("maxWidth %d", maxWidth );
     maxHeight = (uint)(maxHeight / 16) * 16;   // must be a multiple of 8
 
     if(maxWidth  > 0 && maxWidth  < max_x) max_x = maxWidth;  // overwrite
