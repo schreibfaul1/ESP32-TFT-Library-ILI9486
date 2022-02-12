@@ -9,7 +9,7 @@ Examplecodes:
 ```` c++
 #include "Arduino.h"
 #include "SPI.h"
-#include "tft.h"
+#include "ili9486.h"
 
 // defaults can be changed in tft.begin
 // CS=22, DC=21, MOSI=23, MISO=19, SCK=18
