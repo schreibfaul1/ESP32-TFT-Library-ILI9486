@@ -10,7 +10,7 @@
 
 
 #include "Arduino.h"
-#include "tft.h"
+#include "ili9486.h"
 
 #define TFT_MAX_PIXELS_AT_ONCE  32
 
