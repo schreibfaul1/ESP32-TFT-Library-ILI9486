@@ -3,7 +3,7 @@
 #include "SPI.h"
 #include "SD.h"
 #include "FS.h"
-#include "tft.h"
+#include "ili9486.h"
 
 #define TFT_CS        22    // do not use GPI032 or GPIO33 here
 #define TFT_DC        21    // do not use GPI032 or GPIO33 here
