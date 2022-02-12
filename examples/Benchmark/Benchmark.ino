@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "SPI.h"
-#include "tft.h"
+#include "ili9486.h"
 
 
 #define TFT_CS        22
