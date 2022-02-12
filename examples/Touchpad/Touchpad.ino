@@ -1,7 +1,7 @@
 
 #include "Arduino.h"
 #include "SPI.h"
-#include "tft.h"
+#include "ili9486.h"
 
 
 #define TFT_CS        22    // do not use GPI032 or GPIO33 here
