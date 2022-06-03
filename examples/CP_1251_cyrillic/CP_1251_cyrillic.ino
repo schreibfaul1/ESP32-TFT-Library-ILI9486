@@ -1,25 +1,16 @@
-/*
- * Example for codepage 1251 cyrillic
- *
- *
- * uncomment #include "fonts/Garamond_cyrillic.h" in tft.h
- */
-
-
-
 #include "Arduino.h"
-#include "SPI.h"
 #include "ili9486.h"
 
-#define TFT_CS        22    // do not use GPI032 or GPIO33 here
-#define TFT_DC        21    // do not use GPI032 or GPIO33 here
+// GPIOs for SPI
 #define SPI_MOSI      23
 #define SPI_MISO      19
 #define SPI_SCK       18
-#define TP_CS         16
 
-
-
+// GPIOs for TFT/TP
+#define TFT_CS        22
+#define TFT_DC         5
+#define TP_CS         13
+#define TP_IRQ        12
 
 TFT tft;
 
@@ -27,12 +18,11 @@ void setup() {
     String txt="";
     pinMode(TP_CS, OUTPUT);
     digitalWrite(TP_CS, HIGH); // disable the touchpad
-    SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
-    tft.begin(TFT_CS, TFT_DC, SPI_MOSI, SPI_MISO, SPI_SCK);
+	tft.begin(TFT_CS, TFT_DC, VSPI, SPI_MOSI, SPI_MISO, SPI_SCK);
     tft.fillScreen(TFT_BLACK);
     tft.setRotation(1);
     tft.setCursor(0, 0);
-    tft.setFont(Garamond32x33cyrillic);
+    tft.setFont(Times_New_Roman38x31);
     tft.setTextColor(TFT_WHITE);
     txt="Парус – a poem by M.Lermontow\n";
     tft.println(txt);
