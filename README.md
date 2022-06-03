@@ -52,30 +52,43 @@ https://github.com/Bodmer/JPEGDecoder
 ```` c++
 #include "Arduino.h"
 #include "SPI.h"
-#include "SD.h"
+#include "SD_MMC.h"
 #include "FS.h"
-#include "tft.h"
+#include "ili9486.h"
+
+// GPIOs for SPI
+#define SPI_MOSI      23
+#define SPI_MISO      19
+#define SPI_SCK       18
+
+// GPIOs for TFT/TP
+#define TFT_CS        22
+#define TFT_DC         5
+#define TP_CS         13
+#define TP_IRQ        12
 
 TFT tft;
 
+//-------------------------------------------------------------------------------------
 void setup() {
-    SPI.begin();
-    tft.begin();
-    SD.begin();
-    //SD.begin(5,SPI,16000000); // faster speed
+  	pinMode(2, INPUT_PULLUP);
+	if(!SD_MMC.begin("/sd", true)){
+      	log_e("SD Card Mount Failed");
+      	while(1){};  // endless loop
+	}
+	  tft.setFrequency(40000000);
+    tft.begin(TFT_CS, TFT_DC, VSPI, SPI_MOSI, SPI_MISO, SPI_SCK);
 }
-
 //-------------------------------------------------------------------------------------
 void loop(void) {
         tft.setRotation(0); //portait
-        tft.drawBmpFile(SD, "/wall_e.bmp", 0, 0);
+        tft.drawBmpFile(SD_MMC, "/wall_e.bmp", 0, 0);
         delay(2000);
         tft.setRotation(3); //landscape
-        tft.drawJpgFile(SD,"/wallpaper1.jpg", 0,0);
+        tft.drawJpgFile(SD_MMC,"/wallpaper1.jpg", 0,0);
         delay(2000);
-        tft.drawJpgFile(SD,"/arduino.jpg", 100,50);
+        tft.drawJpgFile(SD_MMC,"/arduino.jpg", 100,50);
         delay(2000);
-
 }
 //-------------------------------------------------------------------------------------
 ````
