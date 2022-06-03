@@ -8,20 +8,28 @@ Examplecodes:
   
 ```` c++
 #include "Arduino.h"
-#include "SPI.h"
 #include "ili9486.h"
 
-// defaults can be changed in tft.begin
-// CS=22, DC=21, MOSI=23, MISO=19, SCK=18
+// GPIOs for SPI
+#define SPI_MOSI      23
+#define SPI_MISO      19
+#define SPI_SCK       18
+
+// GPIOs for TFT/TP
+#define TFT_CS        22
+#define TFT_DC         5
+#define TP_CS         13
+#define TP_IRQ        12
 
 TFT tft;
+
 //-------------------------------------------------------------------------------------
 void setup() {
-    SPI.begin();
-    tft.begin();
+
+    tft.begin(TFT_CS, TFT_DC, VSPI, SPI_MOSI, SPI_MISO, SPI_SCK);
     tft.setRotation(1); //landscape
     tft.fillScreen(TFT_BLACK);
-    tft.setFont(Garamond34x42);
+    tft.setFont(Times_New_Roman66x53);
     tft.setTextColor(TFT_CYAN);
     tft.setCursor(20,30);
     tft.print("Hello World!");
@@ -37,6 +45,7 @@ void loop(void) {
     }
 }
 //-------------------------------------------------------------------------------------
+
 ````
 Display a bitmap or jpg file,  thanks to Bodmer for his great work - JPEG Decoder Library 
 https://github.com/Bodmer/JPEGDecoder
