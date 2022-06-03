@@ -95,44 +95,49 @@ void loop(void) {
 Use the touchpad
 ```` c++
 #include "Arduino.h"
-#include "SPI.h"
-#include "tft.h"
+#include "ili9486.h"
 
-#define TP_IRQ        39
-#define TP_CS         16
+// GPIOs for SPI
+#define SPI_MOSI      23
+#define SPI_MISO      19
+#define SPI_SCK       18
+
+// GPIOs for TFT/TP
+#define TFT_CS        22
+#define TFT_DC         5
+#define TP_CS         13
+#define TP_IRQ        12
 
 TFT tft;
 TP tp(TP_CS, TP_IRQ);
-
 uint16_t tp_x, tp_y;
 
+//-------------------------------------------------------------------------------------
 void setup() {
-    SPI.begin();
-    tft.begin();
-//  SD.begin();
-    tft.setRotation(1); // Use landscape format
-    tp.setRotation(1);
+    tft.begin(TFT_CS, TFT_DC, VSPI, SPI_MOSI, SPI_MISO, SPI_SCK);
+    tft.setFrequency(40000000);
+	tft.setRotation(1); //landscape
+	tp.setRotation(1);
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_GREENYELLOW);
-    tft.setTextSize(2);
+    tft.setTextSize(4);
 }
-
 //-------------------------------------------------------------------------------------
 void loop(void) {
     tp.loop();
 }
 //-------------------------------------------------------------------------------------
-
-// Event from TouchPad
+// Events from TouchPad
 void tp_pressed(uint16_t x, uint16_t y){
     tp_x=x;  tp_y=y;
 }
 void tp_released(){
-    tft.fillRect(100, 100, 80, 40, TFT_BLACK);
+    tft.fillRect(100, 100, 120, 50, TFT_BLACK);
     tft.setCursor(100, 100);
     tft.print("PosX="); tft.println(tp_x);
     tft.print("PosY="); tft.println(tp_y);
 }
+//-------------------------------------------------------------------------------------
 ````
 
 
