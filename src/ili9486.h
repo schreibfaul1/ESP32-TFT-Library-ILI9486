@@ -2,7 +2,7 @@
  *  tft.h
  *
  *  Created on: May 28,2018
- *  Updated on: Jan 22,2022
+ *  Updated on: Jun 03,2022
  *      Author: Wolle (schreibfaul1)
  *
  */
@@ -97,7 +97,7 @@ class TFT : public Print {
         TFT();
         virtual ~TFT(){}
 
-        void      begin(uint8_t CS=22, uint8_t DC=21, uint8_t MOSI=23, uint8_t MISO=19, uint8_t SCK=18);
+        void begin(uint8_t CS, uint8_t DC, uint8_t spi, uint8_t mosi, uint8_t miso, uint8_t sclk);
 
         void      setRotation(uint8_t r);
         void      setFrequency(uint32_t f);
@@ -210,27 +210,29 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
 
 
     private:
-        uint32_t  _freq;
-        uint16_t  _height;
-        uint16_t  _width;
-        uint8_t   _rotation;
-        uint16_t  _curX=0;
-        int16_t   _curY=0;
-        uint16_t  _textcolor = TFT_BLACK;
-        uint8_t   _textorientation=0;
-        boolean   _f_utf8=false;
-        boolean   _f_cp1251=false;
-        boolean   _f_cp1252=false;
-        boolean   _f_cp1253=false;
+        SPIClass*        spi_TFT = nullptr;
+        SPISettings      TFT_SPI;
+        uint32_t         _freq;
+        uint16_t         _height;
+        uint16_t         _width;
+        uint8_t          _rotation;
+        uint16_t         _curX=0;
+        int16_t          _curY=0;
+        uint16_t         _textcolor = TFT_BLACK;
+        uint8_t          _textorientation=0;
+        boolean          _f_utf8=false;
+        boolean          _f_cp1251=false;
+        boolean          _f_cp1252=false;
+        boolean          _f_cp1253=false;
         const uint16_t * _font = Times_New_Roman15x14;
-        boolean   _f_curPos=false;
-        uint8_t   TFT_DC  = 21;    /* Data or Command */
-        uint8_t   TFT_CS  = 22;    /* SPI Chip select */
-        //uint8_t   TFT_BL  = 17;    /* BackLight */
-        uint8_t   TFT_SCK = 18;
-        uint8_t   TFT_MISO= 19;
-        uint8_t   TFT_MOSI= 23;
-        uint8_t   buf[1024];
+        boolean          _f_curPos=false;
+        uint8_t          TFT_DC  = 21;    /* Data or Command */
+        uint8_t          TFT_CS  = 22;    /* SPI Chip select */
+        //uint8_t        TFT_BL  = 17;    /* BackLight */
+        uint8_t          TFT_SCK = 18;
+        uint8_t          TFT_MISO= 19;
+        uint8_t          TFT_MOSI= 23;
+        uint8_t          buf[1024];
 
         inline int minimum(int a, int b){if(a < b) return a; else return b;}
     	inline void TFT_DC_HIGH() {if (TFT_DC < 32) {GPIO.out_w1ts = (1 << TFT_DC);}

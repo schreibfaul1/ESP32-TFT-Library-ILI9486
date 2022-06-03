@@ -2,7 +2,7 @@
  *  tft.cpp
  *
  *  Created on: May 28,2018
- *  Updated on: Jan 22,2022
+ *  Updated on: Jun 03,2022
  *      Author: Wolle (schreibfaul1)
  *
  */
@@ -15,6 +15,7 @@
 #define TFT_MAX_PIXELS_AT_ONCE  32
 
 JPEGDecoder JpegDec;
+SPIClass*   SPItransfer;
 
 void TFT::init() {
     if(tft_info) tft_info("init ILI9486\n");
@@ -24,56 +25,56 @@ void TFT::init() {
         delay(120);
 
         writeCommand(0x3A); // Interface Pixel Format
-        SPI.write16(0x55);
+        spi_TFT->write16(0x55);
 
         writeCommand(0xC2); // Power Control 3 (For Normal Mode)
-        SPI.write16(0x44);
+        spi_TFT->write16(0x44);
 
         writeCommand(0xC5); // VCOM Control
-        SPI.write16(0x00);
-        SPI.write16(0x00);
-        SPI.write16(0x00);
-        SPI.write16(0x00);
+        spi_TFT->write16(0x00);
+        spi_TFT->write16(0x00);
+        spi_TFT->write16(0x00);
+        spi_TFT->write16(0x00);
 
         writeCommand(0xE0); // PGAMCTRL(Positive Gamma Control)
-        SPI.write16(0x0F);
-        SPI.write16(0x1F);
-        SPI.write16(0x1C);
-        SPI.write16(0x0C);
-        SPI.write16(0x0F);
-        SPI.write16(0x08);
-        SPI.write16(0x48);
-        SPI.write16(0x98);
-        SPI.write16(0x37);
-        SPI.write16(0x0A);
-        SPI.write16(0x13);
-        SPI.write16(0x04);
-        SPI.write16(0x11);
-        SPI.write16(0x0D);
-        SPI.write16(0x00);
+        spi_TFT->write16(0x0F);
+        spi_TFT->write16(0x1F);
+        spi_TFT->write16(0x1C);
+        spi_TFT->write16(0x0C);
+        spi_TFT->write16(0x0F);
+        spi_TFT->write16(0x08);
+        spi_TFT->write16(0x48);
+        spi_TFT->write16(0x98);
+        spi_TFT->write16(0x37);
+        spi_TFT->write16(0x0A);
+        spi_TFT->write16(0x13);
+        spi_TFT->write16(0x04);
+        spi_TFT->write16(0x11);
+        spi_TFT->write16(0x0D);
+        spi_TFT->write16(0x00);
 
         writeCommand(0xE1); // NGAMCTRL (Negative Gamma Correction)
-        SPI.write16(0x0F);
-        SPI.write16(0x32);
-        SPI.write16(0x2E);
-        SPI.write16(0x0B);
-        SPI.write16(0x0D);
-        SPI.write16(0x05);
-        SPI.write16(0x47);
-        SPI.write16(0x75);
-        SPI.write16(0x37);
-        SPI.write16(0x06);
-        SPI.write16(0x10);
-        SPI.write16(0x03);
-        SPI.write16(0x24);
-        SPI.write16(0x20);
-        SPI.write16(0x00);
+        spi_TFT->write16(0x0F);
+        spi_TFT->write16(0x32);
+        spi_TFT->write16(0x2E);
+        spi_TFT->write16(0x0B);
+        spi_TFT->write16(0x0D);
+        spi_TFT->write16(0x05);
+        spi_TFT->write16(0x47);
+        spi_TFT->write16(0x75);
+        spi_TFT->write16(0x37);
+        spi_TFT->write16(0x06);
+        spi_TFT->write16(0x10);
+        spi_TFT->write16(0x03);
+        spi_TFT->write16(0x24);
+        spi_TFT->write16(0x20);
+        spi_TFT->write16(0x00);
 
         writeCommand(0x20); // Display Inversion OFF   RPi LCD (A)
 //      writeCommand(0x21); // Display Inversion ON    RPi LCD (B)
 
         writeCommand(0x36); // Memory Access Control
-        SPI.write16(0x48);
+        spi_TFT->write16(0x48);
 
         writeCommand(0x29); // Display ON
         delay(150);
@@ -98,18 +99,18 @@ void TFT::setFrequency(uint32_t f){
 }
 
 void TFT::startWrite(void){
-    SPI.beginTransaction(SPISettings(_freq, MSBFIRST, SPI_MODE0));
+    spi_TFT->beginTransaction(SPISettings(_freq, MSBFIRST, SPI_MODE0));
     TFT_CS_LOW();
 }
 
 void TFT::endWrite(void){
     TFT_CS_HIGH();
-    SPI.endTransaction();
+    spi_TFT->endTransaction();
 }
 
 void TFT::writeCommand(uint16_t cmd){
     TFT_DC_LOW();
-    SPI.write16(cmd);
+    spi_TFT->write16(cmd);
     TFT_DC_HIGH();
 }
 // Return the size of the display (per current rotation)
@@ -123,27 +124,32 @@ uint8_t TFT::getRotation(void) const{
     return _rotation;
 }
 
-void TFT::begin(uint8_t CS, uint8_t DC, uint8_t MOSI, uint8_t MISO, uint8_t SCK){
+//----------------------------------------------------------------------------------------------------------------------
+
+void TFT::begin(uint8_t CS, uint8_t DC, uint8_t spi, uint8_t mosi, uint8_t miso, uint8_t sclk) {
+
+    spi_TFT = new SPIClass(spi);
+    spi_TFT->begin(sclk, miso, mosi, -1);
+    spi_TFT->setFrequency(_freq);
+    SPItransfer = spi_TFT;
+
+    TFT_SPI = SPISettings(_freq, MSBFIRST, SPI_MODE0);
+
+
     String info="";
-    TFT_CS=CS; TFT_DC=DC;
-    TFT_MOSI=MOSI; TFT_MISO=MISO; TFT_SCK=SCK;
-
-
-    _width  = TFT_WIDTH;
-    _height = TFT_HEIGHT;
+    TFT_CS = CS; TFT_DC = DC;
 
     pinMode(TFT_DC, OUTPUT);
     digitalWrite(TFT_DC, LOW);
     pinMode(TFT_CS, OUTPUT);
     digitalWrite(TFT_CS, HIGH);
 
-    info ="TFT_CS:" + String(TFT_CS) + " TFT_DC:" + String(TFT_DC);
-    info+=" TFT_MOSI:" + String(TFT_MOSI) + " TFT_MISO:" + String(TFT_MISO) + " TFT_SCK:" + String(TFT_SCK);
-    if(tft_info) tft_info(info.c_str());
-    SPI.begin(TFT_SCK, TFT_MISO, TFT_MOSI, -1);
+    // log_i("DC=%d, CS=%d, MISO=%d, MOSI=%d, SCK=%d", TFT_DC, TFT_CS, TFT_MISO, TFT_MOSI, TFT_SCK);
+    spi_TFT->begin(TFT_SCK, TFT_MISO, TFT_MOSI, -1);
 
-    init();
+    init();  //
 }
+//----------------------------------------------------------------------------------------------------------------------
 
 void TFT::setRotation(uint8_t m) {
     _rotation = m % 4; // can't be higher than 3
@@ -152,22 +158,22 @@ void TFT::setRotation(uint8_t m) {
 
     switch (_rotation) {
         case 0:
-            SPI.write16(MADCTL_MX |MADCTL_BGR);
+            spi_TFT->write16(MADCTL_MX |MADCTL_BGR);
             _width  = TFT_WIDTH;
             _height = TFT_HEIGHT;
             break;
         case 1:
-            SPI.write16(MADCTL_MV | MADCTL_BGR);
+            spi_TFT->write16(MADCTL_MV | MADCTL_BGR);
             _width  = TFT_HEIGHT;
             _height = TFT_WIDTH;
             break;
         case 2:
-            SPI.write16(MADCTL_MY | MADCTL_BGR);
+            spi_TFT->write16(MADCTL_MY | MADCTL_BGR);
             _width  = TFT_WIDTH;
             _height = TFT_HEIGHT;
             break;
         case 3:
-            SPI.write16(MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
+            spi_TFT->write16(MADCTL_MX | MADCTL_MY | MADCTL_MV | MADCTL_BGR);
             _width  = TFT_HEIGHT;
             _height = TFT_WIDTH;
             break;
@@ -183,35 +189,35 @@ void TFT::setRotation(uint8_t m) {
 void TFT::setBrigthness(uint8_t br){
     startWrite();
     writeCommand(ILI9486_CDBVAL);
-    SPI.write16(0);
+    spi_TFT->write16(0);
     writeCommand(ILI9486_WDBVAL);
-    SPI.write16(128);
+    spi_TFT->write16(128);
     endWrite();
 }
 
 void TFT::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     writeCommand(ILI9486_CASET); // Column addr set
-     SPI.write16(x >> 8);
-     SPI.write16(x & 0xFF);     // XSTART
+     spi_TFT->write16(x >> 8);
+     spi_TFT->write16(x & 0xFF);     // XSTART
      w=x+w-1;
-     SPI.write16(w >> 8);
-     SPI.write16(w & 0xFF);     // XEND
+     spi_TFT->write16(w >> 8);
+     spi_TFT->write16(w & 0xFF);     // XEND
 
      writeCommand(ILI9486_PASET); // Row addr set
-     SPI.write16(y >> 8);
-     SPI.write16(y & 0xFF);     // YSTART
+     spi_TFT->write16(y >> 8);
+     spi_TFT->write16(y & 0xFF);     // YSTART
      h=y+h-1;
-     SPI.write16(h >> 8);
-     SPI.write16(h & 0xFF);     // YEND
+     spi_TFT->write16(h >> 8);
+     spi_TFT->write16(h & 0xFF);     // YEND
 }
 
 void TFT::startBitmap(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
     startWrite();
         writeCommand(ILI9486_MADCTL);
-        if(_rotation==0){SPI.write16(MADCTL_MX | MADCTL_MY | MADCTL_ML | MADCTL_BGR);}
-        if(_rotation==1){SPI.write16(MADCTL_MH | MADCTL_MV | MADCTL_MX | MADCTL_BGR);}
-        if(_rotation==2){SPI.write16(MADCTL_MH | MADCTL_BGR);}
-        if(_rotation==3){SPI.write16(MADCTL_MV | MADCTL_MY | MADCTL_BGR);}
+        if(_rotation==0){spi_TFT->write16(MADCTL_MX | MADCTL_MY | MADCTL_ML | MADCTL_BGR);}
+        if(_rotation==1){spi_TFT->write16(MADCTL_MH | MADCTL_MV | MADCTL_MX | MADCTL_BGR);}
+        if(_rotation==2){spi_TFT->write16(MADCTL_MH | MADCTL_BGR);}
+        if(_rotation==3){spi_TFT->write16(MADCTL_MV | MADCTL_MY | MADCTL_BGR);}
 
         setAddrWindow(x, _height - y - h ,w ,h);
         writeCommand(ILI9486_RAMWR);
@@ -225,10 +231,10 @@ void TFT::endBitmap() {
 void TFT::startJpeg() {
     startWrite();
         writeCommand(ILI9486_MADCTL);
-        if(_rotation==0){SPI.write16(MADCTL_MH | MADCTL_MX |MADCTL_BGR);}
-        if(_rotation==1){SPI.write16(MADCTL_MV | MADCTL_BGR);}
-        if(_rotation==2){SPI.write16(MADCTL_MY | MADCTL_BGR);}
-        if(_rotation==3){SPI.write16(MADCTL_MV | MADCTL_MY | MADCTL_MX |MADCTL_BGR);}
+        if(_rotation==0){spi_TFT->write16(MADCTL_MH | MADCTL_MX |MADCTL_BGR);}
+        if(_rotation==1){spi_TFT->write16(MADCTL_MV | MADCTL_BGR);}
+        if(_rotation==2){spi_TFT->write16(MADCTL_MY | MADCTL_BGR);}
+        if(_rotation==3){spi_TFT->write16(MADCTL_MV | MADCTL_MY | MADCTL_MX |MADCTL_BGR);}
     endWrite();
 }
 
@@ -238,16 +244,16 @@ void TFT::endJpeg() {
 
 void TFT::pushColor(uint16_t color) {
     startWrite();
-        SPI.write16(color);
+        spi_TFT->write16(color);
     endWrite();
 }
 
 void TFT::writePixel(uint16_t color){
-    SPI.write16(color);
+    spi_TFT->write16(color);
 }
 
 void TFT::writePixels(uint16_t * colors, uint32_t len){
-    SPI.writePixels((uint8_t*)colors , len * 2);
+    spi_TFT->writePixels((uint8_t*)colors , len * 2);
 }
 
 void TFT::writeColor(uint16_t color, uint32_t len){
@@ -645,12 +651,12 @@ bool TFT::setCursor(uint16_t x, uint16_t y) {
         return false;
     }
     writeCommand(0x2A);
-    SPI.write(x >> 8);
-    SPI.write(x & 0xFF);
+    spi_TFT->write(x >> 8);
+    spi_TFT->write(x & 0xFF);
     writeCommand(ILI9486_RAMWR); //Column Start
     writeCommand(0x2B);
-    SPI.write(y >> 8);
-    SPI.write(y & 0xFF);
+    spi_TFT->write(y >> 8);
+    spi_TFT->write(y & 0xFF);
     writeCommand(ILI9486_RAMWR); //Row Start
     _curX=x;
     _curY=y;
@@ -664,7 +670,7 @@ size_t TFT::writeText(const uint8_t *str, int16_t maxHeight) {    // a pointer t
     int16_t sWidth =  width();
     if(maxHeight > 0){
         sHeight = maxHeight;
-    }  
+    }
 
     uint16_t len=0;
     while(str[len]!=0)len++;  // determine length of text
@@ -2652,12 +2658,12 @@ TP::TP(uint8_t CS, uint8_t IRQ){
 
 uint16_t TP::TP_Send(uint8_t set_val){
     uint16_t get_val;
-    SPI.beginTransaction(TP_SPI);       // Prevent other SPI users
+    SPItransfer->beginTransaction(TP_SPI);       // Prevent other SPI users
       digitalWrite(TP_CS, 0);
-      SPI.write(set_val);
-      get_val=SPI.transfer16(0);
+      SPItransfer->write(set_val);
+      get_val=SPItransfer->transfer16(0);
       digitalWrite(TP_CS, 1);
-    SPI.endTransaction();               // Allow other SPI users
+    SPItransfer->endTransaction();               // Allow other SPI users
     return get_val >> 4;
 }
 
