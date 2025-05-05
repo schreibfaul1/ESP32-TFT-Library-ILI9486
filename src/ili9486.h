@@ -2,7 +2,7 @@
  *  tft.h
  *
  *  Created on: May 28,2018
- *  Updated on: Jun 03,2022
+ *  Updated on: May 05,2025
  *      Author: Wolle (schreibfaul1)
  *
  */
@@ -235,14 +235,10 @@ virtual size_t    write(const uint8_t *buffer, size_t size);
         uint8_t          buf[1024];
 
         inline int minimum(int a, int b){if(a < b) return a; else return b;}
-    	inline void TFT_DC_HIGH() {if (TFT_DC < 32) {GPIO.out_w1ts = (1 << TFT_DC);}
-    	                           else             {GPIO.out1_w1ts.data = (1 << (TFT_DC - 32));}}
-    	inline void TFT_DC_LOW()  {if (TFT_DC < 32) {GPIO.out_w1tc = (1 << TFT_DC);}
-    	                           else             {GPIO.out1_w1tc.data = (1 << (TFT_DC - 32));}}
-    	inline void TFT_CS_HIGH() {if (TFT_CS < 32) {GPIO.out_w1ts = (1 << TFT_CS);}
-    	                           else             {GPIO.out1_w1ts.data = (1 << (TFT_CS - 32));}}
-    	inline void TFT_CS_LOW()  {if (TFT_CS < 32) {GPIO.out_w1tc = (1 << TFT_CS);}
-    	                           else             {GPIO.out1_w1tc.data = (1 << (TFT_CS - 32));}}
+        inline void TFT_DC_HIGH() {gpio_set_level((gpio_num_t)TFT_DC, 1);}
+        inline void TFT_DC_LOW()  {gpio_set_level((gpio_num_t)TFT_DC, 0);}
+        inline void TFT_CS_HIGH() {gpio_set_level((gpio_num_t)TFT_CS, 1);}
+        inline void TFT_CS_LOW()  {gpio_set_level((gpio_num_t)TFT_CS, 0);}
         inline void _swap_int16_t(int16_t &a, int16_t &b) { int16_t t = a; a = b; b = t; }
         void        init();
         void        writeCommand(uint16_t cmd);
